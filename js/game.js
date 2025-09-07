@@ -238,26 +238,52 @@ function renderTop(){
   refreshLevelSlider();
 }
 
+const PT_LAYOUT = [
+  ["H",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,"He"],
+  ["Li","Be",null,null,null,null,null,null,null,null,null,null,"B","C","N","O","F","Ne"],
+  ["Na","Mg",null,null,null,null,null,null,null,null,null,null,"Al","Si","P","S","Cl","Ar"],
+  ["K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr"],
+  ["Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe"],
+  ["Cs","Ba",null,"Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn"],
+  ["Fr","Ra",null,"Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Cn","Nh","Fl","Mc","Lv","Ts","Og"],
+  [null,null,null,"La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu"],
+  [null,null,null,"Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr"]
+];
+
 function renderCollection(){
+  collectionEl.className = 'periodic-table';
   collectionEl.innerHTML = '';
   const st = state;
 
-  for(const a of ATOMS){
-    const inv = st.inventory[a.id] || {count:0,totalMult:0};
-    const card = document.createElement('div'); card.className='card';
-    const icon=document.createElement('div'); icon.className='atom'; icon.textContent=a.id;
-    const img = new Image();
-    img.src = `assets/${a.id}.png`;
-    img.alt = a.id;
-    img.onload = ()=>{ icon.textContent=''; icon.appendChild(img); };
-    const info=document.createElement('div'); info.style.display='grid'; info.style.gap='6px';
-    const title=document.createElement('div'); title.style.fontWeight='800'; title.innerHTML = `${a.name} <span class="muted">(L${a.level})</span>`;
-    const meta=document.createElement('div');
-    const gen=document.createElement('span'); gen.className='badge'; gen.textContent=`EPS/base ${a.baseIncome}`;
-    meta.append(gen);
-    const own=document.createElement('div'); own.className='muted'; own.textContent=`Possédés: ${inv.count} | Mult total: x${inv.totalMult.toFixed(2)}`;
-    info.append(title, meta, own); card.append(icon, info); collectionEl.append(card);
-  }
+  PT_LAYOUT.forEach((row, rIdx)=>{
+    row.forEach((id, cIdx)=>{
+      const cell = document.createElement('div');
+      cell.className = 'pt-cell';
+      cell.style.gridRow = rIdx + 1;
+      cell.style.gridColumn = cIdx + 1;
+
+      if(!id){
+        cell.classList.add('empty');
+        collectionEl.append(cell);
+        return;
+      }
+
+      const a = ATOM_MAP[id];
+      const inv = st.inventory[id] || {count:0,totalMult:0};
+      cell.classList.add(`lvl${a.level}`);
+      if(inv.count <= 0) cell.classList.add('missing');
+
+      const num = document.createElement('div');
+      num.className = 'num';
+      num.textContent = a.baseIncome;
+      const sym = document.createElement('div');
+      sym.className = 'sym';
+      sym.textContent = id;
+      cell.append(num, sym);
+      cell.title = `${a.name} (L${a.level}) — Possédés: ${inv.count} | Mult total: x${inv.totalMult.toFixed(2)}`;
+      collectionEl.append(cell);
+    });
+  });
 }
 
 const shopItemsEl = document.getElementById('shopItems');
