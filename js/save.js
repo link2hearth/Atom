@@ -8,6 +8,7 @@ function emptyState(){
     idleAccum: 0,
     credits: { gems: 0, energy: 0 },
     language: 'fr',
+    levelsUnlocked: 1,
   };
 }
 
@@ -27,6 +28,7 @@ function loadState(){
     if(!st.inventory) st.inventory = {};
     if(!st.credits) st.credits = { gems:0, energy:0 };
     if(!st.language) st.language = 'fr';
+    if(!st.levelsUnlocked) st.levelsUnlocked = 1;
     return st;
   } catch(e){
     return emptyState();
