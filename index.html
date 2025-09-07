@@ -9,19 +9,31 @@
 <body>
   <canvas id="fx"></canvas>
   <div id="flash" class="flash"></div>
-
   <header class="wrap">
     <div class="title"><div class="dot"></div> Atom Gacha — Prototype</div>
     <div class="row">
       <div id="pointsStat" class="stat">◆ Points (total atomes): <span id="points">0</span></div>
       <div class="stat">⏱️ Idle: 1 tirage/min</div>
-
       <button id="btnCollection" class="secondary">Collection</button>
       <button id="btnShop" class="secondary">Magasin</button>
     </div>
   </header>
 
   <main class="wrap">
+    <!-- Compte -->
+    <section class="panel" id="accountPanel">
+      <h2>Compte local</h2>
+      <div class="row" style="gap:8px">
+        <input id="inpUser" placeholder="Pseudonyme" />
+        <input id="inpPass" placeholder="Mot de passe" type="password" />
+        <button id="btnLogin">Se connecter</button>
+        <button id="btnSignup" class="secondary">Créer</button>
+        <div class="spacer"></div>
+        <button id="saveBtn" class="secondary">Sauvegarder</button>
+        <button id="resetBtn" class="secondary">Reset compte</button>
+        <div class="muted" id="authInfo">— non connecté —</div>
+      </div>
+    </section>
 
     <!-- Page Principale -->
     <section id="page-main" class="page active">
