@@ -5,7 +5,7 @@
  * ATOM GACHA — Prototype Idle (v4)
  * — Points = somme des atomes possédés (affichés en haut). Ils serviront de monnaie plus tard.
  * — Idle réimaginé: **1 tirage L1 gratuit / minute**, en ligne et hors-ligne.
- * — Hors-ligne: on simule des tirages sans animation; on **log seulement les gros tirages** (baseIncome×mult > 500) à 2 logs/s + particules.
+ * — Hors-ligne: on simule des tirages sans animation; on **log seulement les gros tirages** (valeur×mult > 500) à 2 logs/s + particules.
  * — Sauvegarde locale automatique dans un fichier `.sav`.
  */
 
@@ -81,19 +81,25 @@ const ACTINIDE_IDS = ["Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm"
 
 let atomicNumber = 1;
 const ATOMS = [];
+function atomValue(level){
+  if(level >= 1 && level <= 7) return level;
+  if(level === 8) return 15;
+  if(level === 9) return 25;
+  return 1;
+}
 PERIODS_RAW.forEach((period, idx)=>{
   period.forEach(el=>{
     let level = idx + 1;
     if (level === 6 && LANTHANIDE_IDS.includes(el.id)) level = 8;
     if (level === 7 && ACTINIDE_IDS.includes(el.id)) level = 9;
-    ATOMS.push({id:el.id, name:el.name, level, baseIncome:atomicNumber});
+    ATOMS.push({id:el.id, name:el.name, level, number:atomicNumber, value:atomValue(level)});
     atomicNumber++;
   });
 });
 const MAX_LEVEL = 9;
 
 const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
-const PULL10_COST = 50; // coût en atomes pour un tirage x10
+const PULL10_COSTS = {1:50,2:100,3:100,4:150,5:200,6:250,7:300,8:500,9:1000};
 
 // ===== Sauvegarde locale
 
@@ -113,7 +119,8 @@ function pickRarity(list=RARITIES){ return choiceWeighted(list, r=>r.weight); }
 function rarityMeta(key, list=RARITIES){ return list.find(r=>r.key===key)||list[0]; }
 
 function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[atomId] = { count: 0, totalMult: 0 }; return state.inventory[atomId]; }
-function computePoints(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
+function computeOwned(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
+function computePoints(state){ return Object.entries(state.inventory).reduce((a,[id,b])=>a + (b?.count||0)*(ATOM_VALUE_MAP[id]||1), 0); }
 function getPullMultiplier(st){ return Math.pow(2, st.pullMult || 0); }
 
 function spendAtoms(st, amount){
@@ -123,18 +130,21 @@ function spendAtoms(st, amount){
     for(const atom of ATOMS.filter(a=>a.level===lvl)){
       const inv = st.inventory[atom.id];
       if(!inv || inv.count <= 0) continue;
-      const take = Math.min(inv.count, remaining);
+      const value = atom.value;
+      const take = Math.min(inv.count, Math.ceil(remaining / value));
       inv.count -= take;
       inv.totalMult -= take;
       if(inv.count <= 0) delete st.inventory[atom.id];
-      remaining -= take;
+      remaining -= take * value;
       if(remaining <= 0) break;
     }
   }
-  return remaining === 0;
+  return remaining <= 0;
 }
 
-const ATOM_MAP = Object.fromEntries(ATOMS.map(a=>[a.id, a]));
+const ATOM_MAP = {}; const ATOM_VALUE_MAP = {};
+ATOMS.forEach(a=>{ ATOM_MAP[a.id] = a; ATOM_VALUE_MAP[a.id] = a.value; });
+window.ATOM_VALUE_MAP = ATOM_VALUE_MAP;
 
 // Pools de tirage par période (lignes horizontales)
 const DRAW_POOLS = PERIODS_RAW.map((period, idx)=>{
@@ -178,7 +188,8 @@ function doPull(level, times){
   const st = state;
   if(level > st.levelsUnlocked) return null;
   if(times === 10){
-    if(!spendAtoms(st, PULL10_COST)) return null;
+    const cost = PULL10_COSTS[level] || PULL10_COSTS[1];
+    if(!spendAtoms(st, cost)) return null;
   }
   const results = [];
   for(let i=0;i<times;i++){
@@ -275,7 +286,7 @@ function renderTop(){
   pointsEl.textContent = total;
   pityEl.textContent = st.pity;
   pullsEl.textContent = st.pulls;
-  ownedEl.textContent = total;
+  ownedEl.textContent = computeOwned(st);
   lastSeenEl.textContent = new Date(st.lastSeen).toLocaleString();
   refreshLevelSlider();
 }
@@ -317,7 +328,7 @@ function renderCollection(){
 
       const num = document.createElement('div');
       num.className = 'num';
-      num.textContent = a.baseIncome;
+      num.textContent = a.number;
       const sym = document.createElement('div');
       sym.className = 'sym';
       sym.textContent = id;
@@ -377,10 +388,13 @@ function renderShop(){
 function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; default: return ''; } }
 function totalTextClass(total){ if(total===125) return 't-rainbow'; if(total>=100) return 't-legendaire'; if(total>=50) return 't-epique'; if(total>=25) return 't-rare'; return 't-commun'; }
 function pushLogRich(res){
-  const total = res.baseAmount * res.multAmount * (res.purchaseMult || 1);
+
+  const totalAtoms = res.baseAmount * res.multAmount * (res.purchaseMult || 1);
+  const total = totalAtoms * res.atom.value;
   const cls = totalTextClass(total);
   const p = document.createElement('div');
-  p.innerHTML = `<span class="${cls}">${res.atom.name} [${res.atom.id}]</span> — ${res.baseAmount}x${res.multAmount}x${res.purchaseMult || 1} = ${total}${res.forced?" (pitié)":""}`;
+  p.innerHTML = `<span class="${cls}">${res.atom.name} [${res.atom.id}]</span> — ${res.baseAmount}x${res.multAmount}x${res.purchaseMult || 1}x${res.atom.value} = ${total}${res.forced?" (pitié)":""}`;
+
   logEl.prepend(p);
 }
 
@@ -415,15 +429,19 @@ async function pullUI(level, times){
   [btnPull1, btnPull10].forEach(b=> b.disabled=true);
   if(times===1){
     const r = results[0];
-    const total = r.baseAmount * r.multAmount * (r.purchaseMult || 1);
+
+    const totalAtoms = r.baseAmount * r.multAmount * (r.purchaseMult || 1);
+    const total = totalAtoms * r.atom.value;
     const cls = totalTextClass(total);
-    resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount}x${r.purchaseMult || 1} = ${total}${r.forced?" (pitié)":""}`;
+    resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount}x${r.purchaseMult || 1}x${r.atom.value} = ${total}${r.forced?" (pitié)":""}`;
     pushLogRich(r);
   } else {
     for(const r of results){
-      const total = r.baseAmount * r.multAmount * (r.purchaseMult || 1);
+      const totalAtoms = r.baseAmount * r.multAmount * (r.purchaseMult || 1);
+      const total = totalAtoms * r.atom.value;
       const cls = totalTextClass(total);
-      resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount}x${r.purchaseMult || 1} = ${total}${r.forced?" (pitié)":""}`;
+      resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount}x${r.purchaseMult || 1}x${r.atom.value} = ${total}${r.forced?" (pitié)":""}`;
+
       pushLogRich(r);
       await new Promise(res=>setTimeout(res, 200));
     }
@@ -438,7 +456,7 @@ async function pullUI(level, times){
 
 function idleTick(){ const st = state; const now = Date.now(); const dt = now - (st.lastTick || now); st.lastTick = now; st.idleAccum = (st.idleAccum || 0) + dt; const ONE = 60000; while(st.idleAccum >= ONE){ st.idleAccum -= ONE; const res = rollOnce(1, st); // pas d'anim ici
   // On garde seulement les gros tirages pour le log différé
-  const total = res.atom.baseIncome * res.bonus.mult; if(total > 500){ queueBig(res); }
+  const total = res.atom.value * res.bonus.mult; if(total > 500){ queueBig(res); }
  }
  persist(); renderTop(); }
 setInterval(idleTick, 1000);
@@ -446,7 +464,7 @@ setInterval(idleTick, 1000);
 // ===== Hors-ligne: reconstitution à la connexion
 function applyOffline(){ const st = state; const now = Date.now(); const minutes = Math.floor((now - (st.lastSeen || now))/60000); st.lastSeen = now; if(minutes <= 0){ persist(); return; }
   const bigs = [];
-  for(let i=0;i<minutes;i++){ const res = rollOnce(1, st); const total = res.atom.baseIncome * res.bonus.mult; if(total > 500){ bigs.push(res); } }
+  for(let i=0;i<minutes;i++){ const res = rollOnce(1, st); const total = res.atom.value * res.bonus.mult; if(total > 500){ bigs.push(res); } }
   persist(); renderTop(); if(bigs.length){ playBigQueue(bigs); }
 
 }

@@ -14,7 +14,8 @@ function emptyState(){
 }
 
 function computePoints(state){
-  return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0);
+  const values = window.ATOM_VALUE_MAP || {};
+  return Object.entries(state.inventory).reduce((a,[id,b])=>a + (b?.count||0)*(values[id]||1), 0);
 }
 
 function loadState(){
