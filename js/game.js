@@ -18,14 +18,6 @@ const RARITIES = [
   {key:"Légendaire", weight:0.2, amount:25, palette:["#fde68a","#fbbf24","#f59e0b"]},
 ];
 
-const BASE_RARITIES = [
-  {key:"Commun", weight:60, amount:1},
-  {key:"Peu commun", weight:25, amount:2},
-  {key:"Rare", weight:12, amount:3},
-  {key:"Épique", weight:2.8, amount:4},
-  {key:"Légendaire", weight:0.2, amount:5},
-];
-
 // ===== Atomes par période du tableau périodique (Wikipedia)
 const PERIODS_RAW = [
   [
@@ -169,18 +161,19 @@ const RARITY_ORDER = ["Commun","Peu commun","Rare","Épique","Légendaire"];
 
 // ===== Tirages
 function rollOnce(level, userState, {forceMinRarity=null}={}){
-  const baseRar = forceMinRarity ? BASE_RARITIES.find(r=>r.key===forceMinRarity) : pickRarity(BASE_RARITIES);
-  const multRar = pickRarity();
+  const addAmount = Math.floor(Math.random()*5) + 1;
+  const multRar = forceMinRarity ? RARITIES.find(r=>r.key===forceMinRarity) : pickRarity();
   const atom = pickAtom(level);
   const purchaseMult = getPullMultiplier(userState);
-  const baseAmount = baseRar.amount;
   const multAmount = multRar.amount;
-  const finalMult = baseAmount * multAmount;
-  const bonus = {mult: finalMult * purchaseMult};
+  const product = addAmount * multAmount * purchaseMult;
+  const totalValue = atom.value + product;
+  const finalMult = totalValue / atom.value;
+  const bonus = {mult: finalMult};
   const inv = ensureInv(userState, atom.id); inv.count += bonus.mult; inv.totalMult += bonus.mult;
   userState.pulls += 1;
-  userState.pity = (["Rare","Épique","Légendaire"].includes(baseRar.key)) ? 0 : (userState.pity + 1);
-  return { atom, bonus, rarityBase: baseRar.key, rarityMult: multRar.key, baseAmount, multAmount, purchaseMult, level };
+  userState.pity = (["Rare","Épique","Légendaire"].includes(multRar.key)) ? 0 : (userState.pity + 1);
+  return { atom, bonus, rarityMult: multRar.key, addAmount, multAmount, purchaseMult, totalValue, level };
 
 }
 
@@ -195,7 +188,7 @@ function doPull(level, times){
   for(let i=0;i<times;i++){
     const pityBefore = st.pity;
     let res = rollOnce(level, st);
-    if(pityBefore >= PITY_THRESHOLD && ["Commun","Peu commun"].includes(res.rarityBase)){
+    if(pityBefore >= PITY_THRESHOLD && ["Commun","Peu commun"].includes(res.rarityMult)){
       res = rollOnce(level, st, {forceMinRarity:"Rare"}); results.push({...res, forced:true});
     } else { results.push(res); }
   }
@@ -389,11 +382,11 @@ function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case '
 function totalTextClass(total){ if(total===125) return 't-rainbow'; if(total>=100) return 't-legendaire'; if(total>=50) return 't-epique'; if(total>=25) return 't-rare'; return 't-commun'; }
 function pushLogRich(res){
 
-  const totalAtoms = res.baseAmount * res.multAmount * (res.purchaseMult || 1);
-  const total = totalAtoms * res.atom.value;
+  const product = res.addAmount * res.multAmount * (res.purchaseMult || 1);
+  const total = res.atom.value + product;
   const cls = totalTextClass(total);
   const p = document.createElement('div');
-  p.innerHTML = `<span class="${cls}">${res.atom.name} [${res.atom.id}]</span> — ${res.baseAmount}x${res.multAmount}x${res.purchaseMult || 1}x${res.atom.value} = ${total}${res.forced?" (pitié)":""}`;
+  p.innerHTML = `<span class="${cls}">${res.atom.name} [${res.atom.id}]</span> — ${res.atom.value}+${res.addAmount}x${res.multAmount}x${res.purchaseMult || 1} = ${total}${res.forced?" (pitié)":""}`;
 
   logEl.prepend(p);
 }
@@ -430,17 +423,17 @@ async function pullUI(level, times){
   if(times===1){
     const r = results[0];
 
-    const totalAtoms = r.baseAmount * r.multAmount * (r.purchaseMult || 1);
-    const total = totalAtoms * r.atom.value;
+    const product = r.addAmount * r.multAmount * (r.purchaseMult || 1);
+    const total = r.atom.value + product;
     const cls = totalTextClass(total);
-    resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount}x${r.purchaseMult || 1}x${r.atom.value} = ${total}${r.forced?" (pitié)":""}`;
+    resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.atom.value}+${r.addAmount}x${r.multAmount}x${r.purchaseMult || 1} = ${total}${r.forced?" (pitié)":""}`;
     pushLogRich(r);
   } else {
     for(const r of results){
-      const totalAtoms = r.baseAmount * r.multAmount * (r.purchaseMult || 1);
-      const total = totalAtoms * r.atom.value;
+      const product = r.addAmount * r.multAmount * (r.purchaseMult || 1);
+      const total = r.atom.value + product;
       const cls = totalTextClass(total);
-      resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount}x${r.purchaseMult || 1}x${r.atom.value} = ${total}${r.forced?" (pitié)":""}`;
+      resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.atom.value}+${r.addAmount}x${r.multAmount}x${r.purchaseMult || 1} = ${total}${r.forced?" (pitié)":""}`;
 
       pushLogRich(r);
       await new Promise(res=>setTimeout(res, 200));
