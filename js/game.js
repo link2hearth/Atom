@@ -69,6 +69,7 @@ const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
 // ===== Sauvegarde locale
 
 let state = loadState();
+if(!state.language) state.language = 'fr';
 
 function persist(){
   state.lastSeen = Date.now();
@@ -153,6 +154,74 @@ const lastSeenEl = document.getElementById('lastSeen');
 const collectionEl = document.getElementById('collection');
 const resultTextEl = document.getElementById('resultText');
 const logEl = document.getElementById('log');
+const langSelect = document.getElementById('langSelect');
+
+const I18N = {
+  fr: {
+    title: 'Atom Gacha — Prototype',
+    pointsStat: '◆ Points (total atomes):',
+    idleStat: '⏱️ Idle: 1 tirage/min',
+    btnCollection: 'Collection',
+    btnShop: 'Magasin',
+    pullsHeader: 'Tirages',
+    pull1_l1: 'Tirage Lvl 1 (gratuit)',
+    pull10_l1: '×10 (90⚛)',
+    pull1Hint: 'L1: x1 (70%), x5 (25%), x10 (4%), x25 (1%).',
+    pull1_l2: 'Tirage Lvl 2 (100⚛)',
+    pull10_l2: '×10 (900⚛)',
+    l2note: 'L2 inclut <span class="t-immortel">Immortel</span>.',
+    lastResultTitle: 'Dernier résultat',
+    footer: 'Idle: 1 tirage gratuit par minute (y compris hors‑ligne, sans animation, sauf gros tirages).',
+    statsHeader: 'Stats',
+    owned: 'Éléments possédés :',
+    pity: 'Pitié:',
+    pulls: 'Tirages totaux:',
+    lastSave: 'Dernière sauvegarde :',
+    collectionTitle: 'Collection',
+    shopTitle: 'Magasin',
+    back: '⟵ Retour'
+  },
+  en: {
+    title: 'Atom Gacha — Prototype',
+    pointsStat: '◆ Points (total atoms):',
+    idleStat: '⏱️ Idle: 1 pull/min',
+    btnCollection: 'Collection',
+    btnShop: 'Shop',
+    pullsHeader: 'Pulls',
+    pull1_l1: 'Level 1 Pull (free)',
+    pull10_l1: '×10 (90⚛)',
+    pull1Hint: 'L1: x1 (70%), x5 (25%), x10 (4%), x25 (1%).',
+    pull1_l2: 'Level 2 Pull (100⚛)',
+    pull10_l2: '×10 (900⚛)',
+    l2note: 'Level 2 includes <span class="t-immortel">Immortal</span>.',
+    lastResultTitle: 'Last result',
+    footer: 'Idle: 1 free pull per minute (including offline, without animation, except big pulls).',
+    statsHeader: 'Stats',
+    owned: 'Owned elements:',
+    pity: 'Pity:',
+    pulls: 'Total pulls:',
+    lastSave: 'Last save:',
+    collectionTitle: 'Collection',
+    shopTitle: 'Shop',
+    back: '⟵ Back'
+  }
+};
+
+function applyLang(lang){
+  const dict = I18N[lang] || I18N.fr;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.dataset.i18n;
+    if(dict[key]) el.innerHTML = dict[key];
+  });
+  document.documentElement.lang = lang;
+  langSelect.value = lang;
+}
+
+langSelect.addEventListener('change', ()=>{
+  state.language = langSelect.value;
+  applyLang(state.language);
+  persist();
+});
 
 
 function renderTop(){
@@ -281,4 +350,5 @@ function pushLog(html){ const p=document.createElement('div'); p.innerHTML=html;
 applyOffline();
 renderTop();
 renderCollection();
+applyLang(state.language);
 
