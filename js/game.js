@@ -1,151 +1,3 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Atom Gacha — Prototype Idle</title>
-  <style>
-    :root { --bg:#0f1222; --panel:#1a1f3c; --accent:#7c5cff; --muted:#a0a6d3; --text:#eef1ff; --good:#4ade80; --warn:#f59e0b; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: radial-gradient(1200px 600px at 70% -10%, #1f2350 0%, var(--bg) 60%) fixed; color: var(--text); }
-    header { padding: 12px 16px; display:flex; align-items: center; justify-content: space-between; gap:12px; }
-    .title { display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:0.3px; }
-    .dot { width:12px; height:12px; border-radius:999px; background: var(--accent); box-shadow: 0 0 18px var(--accent); }
-    .wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px 64px; }
-    .panels { display:grid; grid-template-columns: 1fr; gap:16px; }
-    .panel { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
-    .row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-    .stat { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius: 999px; background: rgba(124,92,255,0.12); border:1px solid rgba(124,92,255,0.35); }
-    .muted{ color: var(--muted); font-size: 0.9rem; }
-    button { background: var(--accent); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 700; letter-spacing:0.2px; cursor: pointer; box-shadow: 0 8px 18px rgba(124,92,255,0.35); transition: transform .05s ease; }
-    button.secondary { background: transparent; color: var(--text); border:1px solid rgba(255,255,255,0.2); box-shadow:none; }
-    button.ghost { background: transparent; color: var(--text); border: none; text-decoration: underline; box-shadow:none; padding: 6px 8px; }
-    button:disabled { opacity: .55; cursor: not-allowed; filter: saturate(0.7); }
-    button:active { transform: translateY(1px); }
-    input { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.18); border-radius:10px; padding:8px 10px; color: var(--text); }
-    .grid { display:grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-    @media (max-width: 760px){ .grid{ grid-template-columns: repeat(3, 1fr); } }
-    .card { padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); min-height: 86px; display:flex; gap:10px; }
-    .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; border:1px solid rgba(255,255,255,0.15); color: #fff; }
-    .rar-Commun { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.5) }
-    .rar-Peu\ commun { background: rgba(59,130,246,0.25); border-color: rgba(59,130,246,0.5) }
-    .rar-Rare { background: rgba(59,130,246,0.25); border-color: rgba(59,130,246,0.5) }
-    .rar-Épique { background: rgba(168,85,247,0.25); border-color: rgba(168,85,247,0.5) }
-    .rar-Légendaire { background: rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.5) }
-    .rar-Immortel { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.35) }
-    .atom { width:44px; height:44px; border-radius: 10px; background: rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-weight:800; font-size: 1rem; }
-    .log { height: 260px; overflow:auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; background: rgba(0,0,0,0.25); border-radius: 12px; padding: 10px; border: 1px dashed rgba(255,255,255,0.15) }
-    .pill { padding:6px 10px; border:1px solid rgba(255,255,255,0.15); border-radius: 999px; }
-    .footer { margin-top:12px; font-size: 0.85rem; }
-
-    /* Pages */
-    .page { display:none; }
-    .page.active { display:block; }
-
-    /* Canvas particules */
-    #fx { position: fixed; inset:0; pointer-events:none; z-index: 40; }
-
-    /* Couleurs de texte par rareté */
-    .t-commun{ color:#22c55e; }
-    .t-peucommun{ color:#10b981; }
-    .t-rare{ color:#3b82f6; }
-    .t-epique{ color:#a855f7; }
-    .t-legendaire{ color:#f59e0b; }
-    .t-immortel{ background: linear-gradient(90deg, #ff0080, #ff8c00, #ffd300, #00e5ff, #7cff00, #ff0080); -webkit-background-clip:text; background-clip:text; color: transparent; animation: hue 3s linear infinite; }
-    @keyframes hue { to { filter: hue-rotate(360deg); } }
-
-    .t-mult-x1{ color:#e5e7eb; }
-    .t-mult-x5{ color:#3b82f6; }
-    .t-mult-x10{ color:#a855f7; }
-    .t-mult-x25{ color:#f59e0b; }
-    .t-mult-x50{ background: linear-gradient(90deg, #ff0080, #ffd300, #00e5ff, #7cff00, #ff0080); -webkit-background-clip:text; background-clip:text; color: transparent; animation: hue 3s linear infinite; }
-
-    /* Effets Immortel */
-    .flash{ position:fixed; inset:0; pointer-events:none; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.9), rgba(255,255,255,0.0) 60%); opacity:0; z-index:60; }
-    .flash.show{ animation: flashFade 700ms ease-out forwards; }
-    @keyframes flashFade{ 0%{opacity:1} 100%{opacity:0} }
-    .ring{ position:fixed; left:50%; top:50%; width:8px; height:8px; border-radius:999px; border:3px solid transparent; pointer-events:none; z-index:55; opacity:0.9; animation: ringExpand 1200ms ease-out forwards; }
-    @keyframes ringExpand{ from{ transform: translate(-50%,-50%) scale(0.2); opacity:1 } to{ transform: translate(-50%,-50%) scale(30); opacity:0 } }
-    .shake{ animation: shake 600ms ease-in-out; }
-    @keyframes shake{ 0%,100%{ transform: translate3d(0,0,0) } 20%{ transform: translate3d(-4px,3px,0)} 40%{ transform: translate3d(3px,-3px,0)} 60%{ transform: translate3d(-3px,2px,0)} 80%{ transform: translate3d(2px,-2px,0)} }
-  </style>
-</head>
-<body>
-  <canvas id="fx"></canvas>
-  <div id="flash" class="flash"></div>
-  <header class="wrap">
-    <div class="title"><div class="dot"></div> Atom Gacha — Prototype</div>
-    <div class="row">
-      <div id="pointsStat" class="stat">◆ Points (total atomes): <span id="points">0</span></div>
-      <div class="stat">⏱️ Idle: 1 tirage/min</div>
-      <button id="btnCollection" class="secondary">Collection</button>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <!-- Compte -->
-    <section class="panel" id="accountPanel">
-      <h2>Compte local</h2>
-      <div class="row" style="gap:8px">
-        <input id="inpUser" placeholder="Pseudonyme" />
-        <input id="inpPass" placeholder="Mot de passe" type="password" />
-        <button id="btnLogin">Se connecter</button>
-        <button id="btnSignup" class="secondary">Créer</button>
-        <div class="spacer"></div>
-        <button id="saveBtn" class="secondary">Sauvegarder</button>
-        <button id="resetBtn" class="secondary">Reset compte</button>
-        <div class="muted" id="authInfo">— non connecté —</div>
-      </div>
-    </section>
-
-    <!-- Page Principale -->
-    <section id="page-main" class="page active">
-      <div class="panels">
-        <section class="panel">
-          <h2>Tirages</h2>
-          <div class="row" style="margin-bottom:10px">
-            <button id="pull1_l1">Tirage Lvl 1 (gratuit)</button>
-            <button id="pull10_l1">×10 (90⚡)</button>
-            <span class="muted">L1: x1 (70%), x5 (25%), x10 (4%), x25 (1%).</span>
-          </div>
-          <div class="row" style="margin-bottom:10px">
-            <button id="pull1_l2">Tirage Lvl 2 (100⚡)</button>
-            <button id="pull10_l2">×10 (900⚡)</button>
-            <span class="muted">L2 inclut <span class="t-immortel">Immortel</span>.</span>
-          </div>
-          <div id="lastResult" class="panel" style="padding:12px; margin-bottom:12px">
-            <div class="muted">Dernier résultat</div>
-            <div id="resultText" style="font-weight:800; margin-top:4px">—</div>
-          </div>
-          <div class="log" id="log"></div>
-          <div class="footer muted">Idle: 1 tirage gratuit par minute (y compris hors‑ligne, sans animation, sauf gros tirages).</div>
-        </section>
-
-        <section class="panel">
-          <h2>Stats</h2>
-          <div class="row">
-            <div class="pill">Éléments possédés : <span id="owned">0</span></div>
-            <div class="pill">Pitié: <span id="pity">0</span>/50</div>
-            <div class="pill">Tirages totaux: <span id="pulls">0</span></div>
-            <div class="pill">Dernière connexion : <span id="lastSeen">—</span></div>
-          </div>
-        </section>
-      </div>
-    </section>
-
-    <!-- Page Collection -->
-    <section id="page-collection" class="page">
-      <div class="row" style="margin-bottom:8px">
-        <button id="btnBack" class="ghost">⟵ Retour</button>
-      </div>
-      <section class="panel">
-        <h2>Collection</h2>
-        <div class="grid" id="collection"></div>
-      </section>
-    </section>
-  </main>
-
-<script>
 /**
  * ATOM GACHA — Prototype Idle (v4)
  * — Points = somme des atomes possédés (affichés en haut). Ils serviront de monnaie plus tard.
@@ -223,7 +75,8 @@ function emptyState(){
     pity: 0,
     lastTick: Date.now(), // pour idle en ligne
     lastSeen: Date.now(), // pour hors-ligne
-    idleAccum: 0, // ms accumulés en ligne
+    idleAccum: 0, // ms accumulés en ligne,
+    credits: { gems: 0, energy: 0 },
   };
 }
 
@@ -264,13 +117,33 @@ function pickBonus(){ return choiceWeighted(BONUS_TABLE, b=>b.p); }
 function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[atomId] = { count: 0, totalMult: 0 }; return state.inventory[atomId]; }
 function computePoints(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
 
+const ATOM_MAP = Object.fromEntries(ATOMS.map(a=>[a.id, a]));
+const RARITY_ORDER = ["Commun","Peu commun","Rare","Épique","Légendaire","Immortel"];
+
+function spendAtoms(state, amount){
+  let remaining = amount;
+  for(const rar of RARITY_ORDER){
+    const ids = ATOMS.filter(a=>a.rarity===rar).map(a=>a.id);
+    for(const id of ids){
+      const inv = state.inventory[id];
+      if(!inv || inv.count<=0) continue;
+      const take = Math.min(inv.count, remaining);
+      inv.count -= take;
+      remaining -= take;
+      if(remaining<=0) break;
+    }
+    if(remaining<=0) break;
+  }
+  return remaining<=0;
+}
+
 // ===== Tirages
 function rollOnce(level, userState, {forceMinRarity=null}={}){
   const rarity = forceMinRarity ? forceMinRarity : pickRarity(level);
   const effectiveRarity = (userState.pity >= PITY_THRESHOLD) ? "Rare" : rarity;
   const atom = pickAtomByRarity(level, effectiveRarity);
   const bonus = pickBonus();
-  const inv = ensureInv(userState, atom.id); inv.count += 1; inv.totalMult += bonus.mult; // totalMult gardé pour futur
+  const inv = ensureInv(userState, atom.id); inv.count += bonus.mult; inv.totalMult += bonus.mult; // totalMult gardé pour futur
   userState.pulls += 1;
   userState.pity = (["Rare","Épique","Légendaire","Immortel"].includes(effectiveRarity)) ? 0 : (userState.pity + 1);
   return { atom, bonus, rarity: effectiveRarity, level };
@@ -282,8 +155,10 @@ function doPull(level, times){
   // coût interne (L1×1 gratuit)
   let cost = 0; if(level===1){ cost = (times===10? COSTS_L1.pull10 : COSTS_L1.pull1); } else { cost = (times===10? COSTS_L2.pull10 : COSTS_L2.pull1); }
   if(level===1 && times===1) cost = 0;
-  // La monnaie actuelle n'est pas encore les points; on laisse le coût logique pour l'avenir
-  // Ici, on autorise toujours le tirage (free gacha concept). Si tu veux payer plus tard, on branchera sur points.
+  if(cost>0){
+    if(computePoints(st) < cost) return null;
+    if(!spendAtoms(st, cost)) return null;
+  }
 
   const results = [];
   for(let i=0;i<times;i++){
@@ -316,7 +191,42 @@ function renderTop(){ if(!currentUser){ energyEl.textContent = '0'; pityEl.textC
   lastSeenEl.textContent = new Date(st.lastSeen).toLocaleString();
 }
 
-function renderCollection(){ collectionEl.innerHTML = ''; if(!currentUser) return; const st = getUser(currentUser).state; for(const a of ATOMS){ const inv = st.inventory[a.id] || {count:0,totalMult:0}; const card = document.createElement('div'); card.className='card'; const icon=document.createElement('div'); icon.className='atom'; icon.textContent=a.id; const info=document.createElement('div'); info.style.display='grid'; info.style.gap='6px'; const title=document.createElement('div'); title.style.fontWeight='800'; title.innerHTML = `${a.name} <span class="muted">(L${a.level})</span>`; const meta=document.createElement('div'); const rar=document.createElement('span'); rar.className=`badge rar-${a.rarity.replace(' ',' ')}`; rar.textContent=a.rarity; const gen=document.createElement('span'); gen.className='badge'; gen.textContent=`EPS/base ${a.baseIncome}`; meta.append(rar,' ',gen); const own=document.createElement('div'); own.className='muted'; own.textContent=`Possédés: ${inv.count} | Mult total: x${inv.totalMult.toFixed(2)}`; info.append(title, meta, own); card.append(icon, info); collectionEl.append(card); } }
+function renderCollection(){
+  collectionEl.innerHTML = '';
+  if(!currentUser) return;
+  const st = getUser(currentUser).state;
+  for(const a of ATOMS){
+    const inv = st.inventory[a.id] || {count:0,totalMult:0};
+    const card = document.createElement('div'); card.className='card';
+    const icon=document.createElement('div'); icon.className='atom'; icon.textContent=a.id;
+    const img = new Image();
+    img.src = `assets/${a.id}.png`;
+    img.alt = a.id;
+    img.onload = ()=>{ icon.textContent=''; icon.appendChild(img); };
+    const info=document.createElement('div'); info.style.display='grid'; info.style.gap='6px';
+    const title=document.createElement('div'); title.style.fontWeight='800'; title.innerHTML = `${a.name} <span class="muted">(L${a.level})</span>`;
+    const meta=document.createElement('div');
+    const rar=document.createElement('span'); rar.className=`badge rar-${a.rarity.replace(' ',' ')}`; rar.textContent=a.rarity;
+    const gen=document.createElement('span'); gen.className='badge'; gen.textContent=`EPS/base ${a.baseIncome}`;
+    meta.append(rar,' ',gen);
+    const own=document.createElement('div'); own.className='muted'; own.textContent=`Possédés: ${inv.count} | Mult total: x${inv.totalMult.toFixed(2)}`;
+    info.append(title, meta, own); card.append(icon, info); collectionEl.append(card);
+  }
+}
+
+const shopItemsEl = document.getElementById('shopItems');
+const SHOP_ITEMS = [
+  {id:'pack-energy', name:'Recharge énergie x10', cost:10, currency:'gems'}
+];
+
+function renderShop(){
+  shopItemsEl.innerHTML='';
+  for(const it of SHOP_ITEMS){
+    const card=document.createElement('div'); card.className='card';
+    card.textContent = `${it.name} — ${it.cost} ${it.currency}`;
+    shopItemsEl.append(card);
+  }
+}
 
 function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; case 'Immortel': return 't-immortel'; default: return ''; } }
 function multTextClass(m){ if(m>=50) return 't-mult-x50'; if(m>=25) return 't-mult-x25'; if(m>=10) return 't-mult-x10'; if(m>=5) return 't-mult-x5'; return 't-mult-x1'; }
@@ -325,11 +235,23 @@ function pushLogRich(res){ const rarityCls = rarityTextClass(res.rarity); const 
 // ===== Pages
 const pageMain = document.getElementById('page-main');
 const pageCollection = document.getElementById('page-collection');
+const pageShop = document.getElementById('page-shop');
 const btnCollection = document.getElementById('btnCollection');
+const btnShop = document.getElementById('btnShop');
 const btnBack = document.getElementById('btnBack');
-function showPage(key){ pageMain.classList.remove('active'); pageCollection.classList.remove('active'); (key==='collection'?pageCollection:pageMain).classList.add('active'); }
+const btnBackShop = document.getElementById('btnBackShop');
+function showPage(key){
+  pageMain.classList.remove('active');
+  pageCollection.classList.remove('active');
+  pageShop.classList.remove('active');
+  if(key==='collection') pageCollection.classList.add('active');
+  else if(key==='shop') pageShop.classList.add('active');
+  else pageMain.classList.add('active');
+}
 btnCollection.addEventListener('click', ()=>{ renderCollection(); showPage('collection'); });
+btnShop.addEventListener('click', ()=>{ renderShop(); showPage('shop'); });
 btnBack.addEventListener('click', ()=> showPage('main'));
+btnBackShop.addEventListener('click', ()=> showPage('main'));
 
 // ===== Particules
 const fx = document.getElementById('fx'); const ctx = fx.getContext('2d'); let W=0,H=0; function resize(){ W = fx.width = window.innerWidth * devicePixelRatio; H = fx.height = window.innerHeight * devicePixelRatio; } window.addEventListener('resize', resize); resize(); let particles = []; function addParticle(x,y,vx,vy,life,color,size){ particles.push({x,y,vx,vy,life,ttl:life,color,size}); }
@@ -343,7 +265,7 @@ function fxForResult(res){ const meta = rarityMeta(res.level, res.rarity); const
 
 // ===== Tirages UI
 let pulling = false;
-async function pullUI(level, times){ if(!currentUser) { pushLog('<i>Connecte-toi d\'abord.</i>'); return; } if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Impossible de tirer.</i>'); return; } pulling = true; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=false); saveState(); }
+async function pullUI(level, times){ if(!currentUser) { pushLog('<i>Connecte-toi d\'abord.</i>'); return; } if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=false); saveState(); }
 
 // ===== Idle en ligne (1 tirage/min, discret)
 function idleTick(){ if(!currentUser) return; const u = getUser(currentUser); const st = u.state; const now = Date.now(); const dt = now - (st.lastTick || now); st.lastTick = now; st.idleAccum = (st.idleAccum || 0) + dt; const ONE = 60000; while(st.idleAccum >= ONE){ st.idleAccum -= ONE; const res = rollOnce(1, st); // pas d'anim ici
@@ -406,6 +328,3 @@ function pushLog(html){ const p=document.createElement('div'); p.innerHTML=html;
 // ===== Init
 authInfo.textContent = currentUser ? `Connecté: ${currentUser}` : '— non connecté —';
 renderTop(); renderCollection();
-</script>
-</body>
-</html>
