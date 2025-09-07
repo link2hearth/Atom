@@ -9,11 +9,13 @@ function emptyState(){
     credits: { gems: 0, energy: 0 },
     language: 'fr',
     levelsUnlocked: 1,
+    pullMult: 0,
   };
 }
 
 function computePoints(state){
-  return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0);
+  const values = window.ATOM_VALUE_MAP || {};
+  return Object.entries(state.inventory).reduce((a,[id,b])=>a + (b?.count||0)*(values[id]||1), 0);
 }
 
 function loadState(){
@@ -29,6 +31,7 @@ function loadState(){
     if(!st.credits) st.credits = { gems:0, energy:0 };
     if(!st.language) st.language = 'fr';
     if(!st.levelsUnlocked) st.levelsUnlocked = 1;
+    if(typeof st.pullMult !== 'number') st.pullMult = 0;
     return st;
   } catch(e){
     return emptyState();
