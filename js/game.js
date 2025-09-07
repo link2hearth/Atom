@@ -171,6 +171,7 @@ function rollOnce(level, userState, {forceMinRarity=null}={}){
   userState.pulls += 1;
   userState.pity = (["Rare","Épique","Légendaire"].includes(baseRar.key)) ? 0 : (userState.pity + 1);
   return { atom, bonus, rarityBase: baseRar.key, rarityMult: multRar.key, baseAmount, multAmount, purchaseMult, level };
+
 }
 
 function doPull(level, times){
