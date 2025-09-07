@@ -18,6 +18,14 @@ const RARITIES = [
   {key:"Légendaire", weight:0.2, amount:25, palette:["#fde68a","#fbbf24","#f59e0b"]},
 ];
 
+const BASE_RARITIES = [
+  {key:"Commun", weight:60, amount:1},
+  {key:"Peu commun", weight:25, amount:2},
+  {key:"Rare", weight:12, amount:3},
+  {key:"Épique", weight:2.8, amount:4},
+  {key:"Légendaire", weight:0.2, amount:5},
+];
+
 // ===== Atomes par période du tableau périodique (Wikipedia)
 const PERIODS_RAW = [
   [
@@ -93,8 +101,8 @@ function persist(){
 
 // ===== Jeu — utilitaires
 function choiceWeighted(items, weightFn){ const total = items.reduce((a,it)=>a+weightFn(it),0); let r=Math.random()*total; for(const it of items){ r-=weightFn(it); if(r<=0) return it; } return items[items.length-1]; }
-function pickRarity(){ return choiceWeighted(RARITIES, r=>r.weight); }
-function rarityMeta(key){ return RARITIES.find(r=>r.key===key)||RARITIES[0]; }
+function pickRarity(list=RARITIES){ return choiceWeighted(list, r=>r.weight); }
+function rarityMeta(key, list=RARITIES){ return list.find(r=>r.key===key)||list[0]; }
 
 function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[atomId] = { count: 0, totalMult: 0 }; return state.inventory[atomId]; }
 function computePoints(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
@@ -136,7 +144,7 @@ const RARITY_ORDER = ["Commun","Peu commun","Rare","Épique","Légendaire"];
 
 // ===== Tirages
 function rollOnce(level, userState, {forceMinRarity=null}={}){
-  const baseRar = forceMinRarity ? RARITIES.find(r=>r.key===forceMinRarity) : pickRarity();
+  const baseRar = forceMinRarity ? BASE_RARITIES.find(r=>r.key===forceMinRarity) : pickRarity(BASE_RARITIES);
   const multRar = pickRarity();
   const atom = pickAtom(level);
   const finalMult = baseRar.amount * multRar.amount;
@@ -144,7 +152,7 @@ function rollOnce(level, userState, {forceMinRarity=null}={}){
   const inv = ensureInv(userState, atom.id); inv.count += bonus.mult; inv.totalMult += bonus.mult;
   userState.pulls += 1;
   userState.pity = (["Rare","Épique","Légendaire"].includes(baseRar.key)) ? 0 : (userState.pity + 1);
-  return { atom, bonus, rarityBase: baseRar.key, rarityMult: multRar.key, level };
+  return { atom, bonus, rarityBase: baseRar.key, rarityMult: multRar.key, baseAmount: baseRar.amount, multAmount: multRar.amount, level };
 }
 
 function doPull(level, times){
@@ -331,7 +339,8 @@ function renderShop(){
 }
 
 function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; default: return ''; } }
-function pushLogRich(res){ const rarityCls = rarityTextClass(res.rarityBase); const multCls = rarityTextClass(res.rarityMult); const p = document.createElement('div'); p.innerHTML = `<span class="${rarityCls}">${res.atom.name} [${res.atom.id}] — ${res.rarityBase}</span> — bonus <b class="${multCls}">x${res.bonus.mult}</b> (${res.rarityMult})${res.forced?" (pitié)":""}`; logEl.prepend(p); }
+function totalTextClass(total){ if(total===125) return 't-rainbow'; if(total>=100) return 't-legendaire'; if(total>=50) return 't-epique'; if(total>=25) return 't-rare'; return 't-commun'; }
+function pushLogRich(res){ const total = res.baseAmount * res.multAmount; const cls = totalTextClass(total); const p = document.createElement('div'); p.innerHTML = `<span class="${cls}">${res.atom.name} [${res.atom.id}]</span> — ${res.baseAmount}x${res.multAmount} = ${total}${res.forced?" (pitié)":""}`; logEl.prepend(p); }
 
 // ===== Pages
 const pageMain = document.getElementById('page-main');
@@ -356,7 +365,7 @@ btnBackShop.addEventListener('click', ()=> showPage('main'));
 
 // ===== Tirages UI
 let pulling = false;
-async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btnPull1, btnPull10].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarityBase); const multCls = rarityTextClass(r.rarityMult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarityBase}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b> (${r.rarityMult})${r.forced?" (pitié)":""}`; pushLogRich(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarityBase); const multCls = rarityTextClass(r.rarityMult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarityBase}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b> (${r.rarityMult})${r.forced?" (pitié)":""}`; pushLogRich(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btnPull1, btnPull10].forEach(b=> b.disabled=false); persist(); }
+async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btnPull1, btnPull10].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const total = r.baseAmount * r.multAmount; const cls = totalTextClass(total); resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount} = ${total}${r.forced?" (pitié)":""}`; pushLogRich(r); } else { for(const r of results){ const total = r.baseAmount * r.multAmount; const cls = totalTextClass(total); resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount} = ${total}${r.forced?" (pitié)":""}`; pushLogRich(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btnPull1, btnPull10].forEach(b=> b.disabled=false); persist(); }
 
 // ===== Idle en ligne (1 tirage/min, discret)
 

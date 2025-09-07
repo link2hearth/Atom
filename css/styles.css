@@ -44,6 +44,13 @@ input { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.
 .t-rare{ color:#3b82f6; }
 .t-epique{ color:#a855f7; }
 .t-legendaire{ color:#f59e0b; }
+.t-rainbow{
+  background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
 
 
 /* Tableau périodique */
