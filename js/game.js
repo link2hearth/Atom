@@ -1,3 +1,4 @@
+
 import { emptyState, loadAccounts, getUser, setUser, ensureUser, getCurrentUser, setCurrentUser } from './auth.js';
 
 /**
@@ -66,6 +67,7 @@ const COSTS_L2 = { pull1: 100, pull10: 900 };
 const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
 
 // ===== Comptes & Sauvegarde multi-profils
+
 let accounts = loadAccounts();
 let currentUser = getCurrentUser();
 
@@ -84,6 +86,7 @@ function saveState(){
   u.state.lastSeen = Date.now();
   setUser(accounts, currentUser, u);
 }
+
 
 // ===== Jeu — utilitaires
 function choiceWeighted(items, weightFn){ const total = items.reduce((a,it)=>a+weightFn(it),0); let r=Math.random()*total; for(const it of items){ r-=weightFn(it); if(r<=0) return it; } return items[items.length-1]; }
@@ -129,7 +132,9 @@ function rollOnce(level, userState, {forceMinRarity=null}={}){
 
 function doPull(level, times){
   if(!currentUser) return false;
+
   const u = getUser(accounts, currentUser); const st = u.state;
+
   // coût interne (L1×1 gratuit)
   let cost = 0; if(level===1){ cost = (times===10? COSTS_L1.pull10 : COSTS_L1.pull1); } else { cost = (times===10? COSTS_L2.pull10 : COSTS_L2.pull1); }
   if(level===1 && times===1) cost = 0;
@@ -145,12 +150,16 @@ function doPull(level, times){
       res = rollOnce(level, st, {forceMinRarity:"Rare"}); results.push({...res, forced:true});
     } else { results.push(res); }
   }
+
   setUser(accounts, currentUser, u); // sauvegarde
+
   return results;
 }
 
 // ===== Effets & UI
+
 const pointsEl = document.getElementById('points');
+
 const pityEl = document.getElementById('pity');
 const pullsEl = document.getElementById('pulls');
 const ownedEl = document.getElementById('owned');
@@ -158,6 +167,7 @@ const lastSeenEl = document.getElementById('lastSeen');
 const collectionEl = document.getElementById('collection');
 const resultTextEl = document.getElementById('resultText');
 const logEl = document.getElementById('log');
+
 const userLabel = document.getElementById('userLabel');
 
 function renderTop(){
@@ -172,17 +182,22 @@ function renderTop(){
   }
   const st = getUser(accounts, currentUser).state;
   pointsEl.textContent = computePoints(st);
+
   pityEl.textContent = st.pity;
   pullsEl.textContent = st.pulls;
   ownedEl.textContent = computePoints(st);
   lastSeenEl.textContent = new Date(st.lastSeen).toLocaleString();
+
   userLabel.textContent = 'Compte: ' + (currentUser === 'guest' ? 'Invité' : currentUser);
+
 }
 
 function renderCollection(){
   collectionEl.innerHTML = '';
   if(!currentUser) return;
+
   const st = getUser(accounts, currentUser).state;
+
   for(const a of ATOMS){
     const inv = st.inventory[a.id] || {count:0,totalMult:0};
     const card = document.createElement('div'); card.className='card';
@@ -256,6 +271,7 @@ let pulling = false;
 async function pullUI(level, times){ if(!currentUser) { pushLog('<i>Connecte-toi d\'abord.</i>'); return; } if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=false); saveState(); }
 
 // ===== Idle en ligne (1 tirage/min, discret)
+
 function idleTick(){ if(!currentUser) return; const u = getUser(accounts, currentUser); const st = u.state; const now = Date.now(); const dt = now - (st.lastTick || now); st.lastTick = now; st.idleAccum = (st.idleAccum || 0) + dt; const ONE = 60000; while(st.idleAccum >= ONE){ st.idleAccum -= ONE; const res = rollOnce(1, st); // pas d'anim ici
   // On garde seulement les gros tirages pour le log différé
   const total = res.atom.baseIncome * res.bonus.mult; if(total > 500){ queueBig(res); }
@@ -268,12 +284,14 @@ function applyOffline(){ if(!currentUser) return; const u = getUser(accounts, cu
   const bigs = [];
   for(let i=0;i<minutes;i++){ const res = rollOnce(1, st); const total = res.atom.baseIncome * res.bonus.mult; if(total > 500){ bigs.push(res); } }
   setUser(accounts, currentUser, u); renderTop(); if(bigs.length){ playBigQueue(bigs); }
+
 }
 
 // ===== File d'affichage des gros tirages
 let bigQueue = []; let bigTimer = null;
 function queueBig(res){ bigQueue.push(res); if(!bigTimer) playBigQueue(); }
 function playBigQueue(prefill){ if(prefill && prefill.length) bigQueue.push(...prefill); if(bigTimer) return; bigTimer = setInterval(()=>{ const r = bigQueue.shift(); if(!r){ clearInterval(bigTimer); bigTimer=null; return; } pushLogRich(r); fxForResult(r); }, 500); }
+
 
 // ===== Boutons de tirage
 const btn1l1 = document.getElementById('pull1_l1');
@@ -289,6 +307,8 @@ btn10l2.addEventListener('click', ()=> pullUI(2,10));
 function pushLog(html){ const p=document.createElement('div'); p.innerHTML=html; logEl.prepend(p); }
 
 // ===== Init
+
 applyOffline();
 renderTop();
 renderCollection();
+
