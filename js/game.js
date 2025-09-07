@@ -274,36 +274,9 @@ btnShop.addEventListener('click', ()=>{ renderShop(); showPage('shop'); });
 btnBack.addEventListener('click', ()=> showPage('main'));
 btnBackShop.addEventListener('click', ()=> showPage('main'));
 
-// ===== Particules
-const fx = document.getElementById('fx'); const ctx = fx.getContext('2d'); let W=0,H=0; function resize(){ W = fx.width = window.innerWidth * devicePixelRatio; H = fx.height = window.innerHeight * devicePixelRatio; } window.addEventListener('resize', resize); resize(); let particles = [];
-function addParticle(x,y,vx,vy,life,color,size,char=null){ particles.push({x,y,vx,vy,life,ttl:life,color,size,char}); }
-function burstEdges(count, palette){ const MAX = 3000; const base = 180 * Math.log2(1 + count); const n = Math.min(Math.max(12,Math.floor(base)), MAX); const cx = W/2, cy = H/2; for(let i=0;i<n;i++){ const side = Math.floor(Math.random()*4); let x, y; if(side===0){ x = Math.random()*W; y = 0; } else if(side===1){ x = W; y = Math.random()*H; } else if(side===2){ x = Math.random()*W; y = H; } else { x = 0; y = Math.random()*H; } const dx = cx - x; const dy = cy - y; const len = Math.max(1, Math.hypot(dx, dy)); let vx = (dx/len) * (0.35 + Math.random()*0.6); let vy = (dy/len) * (0.35 + Math.random()*0.6); vx += (Math.random()-0.5)*0.25; vy += (Math.random()-0.5)*0.25; vx *= 180/1000; vy *= 180/1000; const life = 3000 + Math.random()*2000; const color = palette[i % palette.length]; const size = (Math.random()*1.6 + 0.8) * devicePixelRatio; addParticle(x, y, vx, vy, life, color, size); } }
-function burstCelebration(total){ const emojis = [{c:'⭐', color:'#ffe066'}, {c:'❤️', color:'#ff5f87'}, {c:'🐱', color:'#fff'}, {c:'🐶', color:'#fff'}, {c:'🐰', color:'#fff'}, {c:'🦊', color:'#fff'}]; const n = Math.min(150, Math.floor(total)); for(let i=0;i<n;i++){ const angle = Math.random()*Math.PI*2; const speed = 0.15 + Math.random()*0.25; const vx = Math.cos(angle)*speed; const vy = Math.sin(angle)*speed; const life = 4000 + Math.random()*3000; const opt = emojis[i % emojis.length]; const size = (18 + Math.random()*12) * devicePixelRatio; addParticle(W/2, H/2, vx, vy, life, opt.color, size, opt.c); } }
-let lastFrame = performance.now(); function step(ts){ const dt = ts - lastFrame; lastFrame = ts; ctx.clearRect(0,0,W,H); for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.life -= dt; if(p.life<=0){ particles.splice(i,1); continue; } p.x += p.vx*dt; p.y += p.vy*dt; if(p.x<0){ p.x=0; p.vx*=-1; } if(p.x>W){ p.x=W; p.vx*=-1; } if(p.y<0){ p.y=0; p.vy*=-1; } if(p.y>H){ p.y=H; p.vy*=-1; } const alpha = Math.max(0, Math.min(1, p.life/p.ttl)); ctx.globalAlpha = alpha; if(p.char){ ctx.font = `${p.size}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle = p.color; ctx.fillText(p.char, p.x, p.y); } else { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fillStyle = p.color; ctx.fill(); } } ctx.globalAlpha = 1; requestAnimationFrame(step); } requestAnimationFrame(step);
-
-let audioCtx; let currentSound;
-function playSound(kind){
-  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  if(currentSound){ try{ currentSound.stop(); }catch(e){} }
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain).connect(audioCtx.destination);
-  if(kind==='big'){ osc.type='sawtooth'; osc.frequency.value=440; } else { osc.type='square'; osc.frequency.value=660; }
-  const now = audioCtx.currentTime;
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(0.4, now+0.01);
-  const dur = kind==='big'?1.2:0.5;
-  gain.gain.exponentialRampToValueAtTime(0.001, now+dur);
-  osc.start(now);
-  osc.stop(now+dur);
-  currentSound = osc;
-}
-
-function fxForResult(res){ const meta = rarityMeta(res.rarity); const total = res.atom.baseIncome * res.bonus.mult; let mult = 1; if(res.rarity==='Rare') mult=1.4; else if(res.rarity==='Épique') mult=2; else if(res.rarity==='Légendaire') mult=3; burstEdges(total*mult, meta.palette); if(total>=10) burstCelebration(total); playSound(total>=50?'big':'small'); }
-
 // ===== Tirages UI
 let pulling = false;
-async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btnPull1, btnPull10].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btnPull1, btnPull10].forEach(b=> b.disabled=false); persist(); }
+async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btnPull1, btnPull10].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btnPull1, btnPull10].forEach(b=> b.disabled=false); persist(); }
 
 // ===== Idle en ligne (1 tirage/min, discret)
 
@@ -325,7 +298,7 @@ function applyOffline(){ const st = state; const now = Date.now(); const minutes
 // ===== File d'affichage des gros tirages
 let bigQueue = []; let bigTimer = null;
 function queueBig(res){ bigQueue.push(res); if(!bigTimer) playBigQueue(); }
-function playBigQueue(prefill){ if(prefill && prefill.length) bigQueue.push(...prefill); if(bigTimer) return; bigTimer = setInterval(()=>{ const r = bigQueue.shift(); if(!r){ clearInterval(bigTimer); bigTimer=null; return; } pushLogRich(r); fxForResult(r); }, 500); }
+function playBigQueue(prefill){ if(prefill && prefill.length) bigQueue.push(...prefill); if(bigTimer) return; bigTimer = setInterval(()=>{ const r = bigQueue.shift(); if(!r){ clearInterval(bigTimer); bigTimer=null; return; } pushLogRich(r); }, 500); }
 
 
 // ===== Boutons de tirage

@@ -37,8 +37,6 @@ input { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.
 .page { display:none; }
 .page.active { display:block; }
 
-/* Canvas particules */
-#fx { position: fixed; inset:0; pointer-events:none; z-index: 40; }
 
 /* Couleurs de texte par rareté */
 .t-commun{ color:#22c55e; }
@@ -53,11 +51,4 @@ input { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.
 .t-mult-x10{ color:#a855f7; }
 .t-mult-x25{ color:#f59e0b; }
 
-.flash{ position:fixed; inset:0; pointer-events:none; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.9), rgba(255,255,255,0.0) 60%); opacity:0; z-index:60; }
-.flash.show{ animation: flashFade 700ms ease-out forwards; }
-@keyframes flashFade{ 0%{opacity:1} 100%{opacity:0} }
-.ring{ position:fixed; left:50%; top:50%; width:8px; height:8px; border-radius:999px; border:3px solid transparent; pointer-events:none; z-index:55; opacity:0.9; animation: ringExpand 1200ms ease-out forwards; }
-@keyframes ringExpand{ from{ transform: translate(-50%,-50%) scale(0.2); opacity:1 } to{ transform: translate(-50%,-50%) scale(30); opacity:0 } }
-.shake{ animation: shake 600ms ease-in-out; }
-@keyframes shake{ 0%,100%{ transform: translate3d(0,0,0) } 20%{ transform: translate3d(-4px,3px,0)} 40%{ transform: translate3d(3px,-3px,0)} 60%{ transform: translate3d(-3px,2px,0)} 80%{ transform: translate3d(2px,-2px,0)} }
 
