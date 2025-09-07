@@ -71,6 +71,7 @@ const PERIODS_RAW = [
 const LANTHANIDE_IDS = ["La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu"];
 const ACTINIDE_IDS = ["Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr"];
 
+const MAX_LEVEL = 9;
 let atomicNumber = 1;
 const ATOMS = [];
 function atomValue(level){
@@ -84,11 +85,12 @@ PERIODS_RAW.forEach((period, idx)=>{
     let level = idx + 1;
     if (level === 6 && LANTHANIDE_IDS.includes(el.id)) level = 8;
     if (level === 7 && ACTINIDE_IDS.includes(el.id)) level = 9;
+    level = MAX_LEVEL + 1 - level;
     ATOMS.push({id:el.id, name:el.name, level, number:atomicNumber, value:atomValue(level)});
     atomicNumber++;
   });
 });
-const MAX_LEVEL = 9;
+// MAX_LEVEL already defined above
 
 const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
 const PULL10_COSTS = {1:50,2:100,3:100,4:150,5:200,6:250,7:300,8:500,9:1000};
@@ -139,21 +141,23 @@ ATOMS.forEach(a=>{ ATOM_MAP[a.id] = a; ATOM_VALUE_MAP[a.id] = a.value; });
 window.ATOM_VALUE_MAP = ATOM_VALUE_MAP;
 
 // Pools de tirage par période (lignes horizontales)
-const DRAW_POOLS = PERIODS_RAW.map((period, idx)=>{
-  const pool = period.map(el=>ATOM_MAP[el.id]);
-  // Inclure H et He dans les tirages des autres groupes
-  if(idx > 0) pool.push(...PERIODS_RAW[0].map(el=>ATOM_MAP[el.id]));
-  return pool;
-});
+const DRAW_POOLS = PERIODS_RAW.map(period => period.map(el => ATOM_MAP[el.id]));
 DRAW_POOLS.push(
-  LANTHANIDE_IDS.map(id=>ATOM_MAP[id]).concat(PERIODS_RAW[0].map(el=>ATOM_MAP[el.id]))
+  LANTHANIDE_IDS.map(id => ATOM_MAP[id])
 );
 DRAW_POOLS.push(
-  ACTINIDE_IDS.map(id=>ATOM_MAP[id]).concat(PERIODS_RAW[0].map(el=>ATOM_MAP[el.id]))
+  ACTINIDE_IDS.map(id => ATOM_MAP[id])
 );
+// After building all pools, reverse them so level 1 corresponds to actinides and level 9 to H/He
+DRAW_POOLS.reverse();
 
 function pickAtom(level){
   const pool = DRAW_POOLS[level-1] || DRAW_POOLS[0];
+  if(level !== 9){
+    const r = Math.random();
+    if(r < 0.05) return ATOM_MAP["H"];
+    if(r < 0.10) return ATOM_MAP["He"];
+  }
   return pool[Math.floor(Math.random()*pool.length)];
 }
 
@@ -379,7 +383,7 @@ function renderShop(){
 }
 
 function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; default: return ''; } }
-function totalTextClass(total){ if(total===125) return 't-rainbow'; if(total>=100) return 't-legendaire'; if(total>=50) return 't-epique'; if(total>=25) return 't-rare'; return 't-commun'; }
+function totalTextClass(total){ if(total>=125) return 't-rainbow'; if(total>=100) return 't-legendaire'; if(total>=50) return 't-epique'; if(total>=25) return 't-rare'; return 't-commun'; }
 function pushLogRich(res){
 
   const product = res.addAmount * res.multAmount * (res.purchaseMult || 1);
