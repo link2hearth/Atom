@@ -45,12 +45,6 @@ input { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.
 .t-epique{ color:#a855f7; }
 .t-legendaire{ color:#f59e0b; }
 
-.t-mult-x1{ color:#e5e7eb; }
-.t-mult-x2{ color:#3b82f6; }
-.t-mult-x5{ color:#3b82f6; }
-.t-mult-x10{ color:#a855f7; }
-.t-mult-x25{ color:#f59e0b; }
-
 
 /* Tableau périodique */
 .periodic-table{ display:grid; grid-template-columns:repeat(18, 40px); grid-auto-rows:40px; gap:4px; }
