@@ -92,7 +92,6 @@ PERIODS_RAW.forEach((period, idx)=>{
 });
 // MAX_LEVEL already defined above
 
-const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
 const PULL10_COSTS = {1:50,2:100,3:100,4:150,5:200,6:250,7:300,8:500,9:1000};
 
 // ===== Sauvegarde locale
@@ -113,7 +112,6 @@ function pickRarity(list=RARITIES){ return choiceWeighted(list, r=>r.weight); }
 function rarityMeta(key, list=RARITIES){ return list.find(r=>r.key===key)||list[0]; }
 
 function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[atomId] = { count: 0, totalMult: 0 }; return state.inventory[atomId]; }
-function computeOwned(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
 function computePoints(state){ return Object.entries(state.inventory).reduce((a,[id,b])=>a + (b?.count||0)*(ATOM_VALUE_MAP[id]||1), 0); }
 function getPullMultiplier(st){ return Math.pow(2, st.pullMult || 0); }
 function roundDisplay(value){
@@ -179,8 +177,6 @@ function rollOnce(level, userState, {forceMinRarity=null}={}){
   const finalMult = totalValue / atom.value;
   const bonus = {mult: finalMult};
   const inv = ensureInv(userState, atom.id); inv.count += bonus.mult; inv.totalMult += bonus.mult;
-  userState.pulls += 1;
-  userState.pity = (["Rare","Épique","Légendaire"].includes(multRar.key)) ? 0 : (userState.pity + 1);
   return { atom, bonus, rarityMult: multRar.key, addAmount, multAmount, purchaseMult, totalValue, level };
 
 }
@@ -194,11 +190,7 @@ function doPull(level, times){
   }
   const results = [];
   for(let i=0;i<times;i++){
-    const pityBefore = st.pity;
-    let res = rollOnce(level, st);
-    if(pityBefore >= PITY_THRESHOLD && ["Commun","Peu commun"].includes(res.rarityMult)){
-      res = rollOnce(level, st, {forceMinRarity:"Rare"}); results.push({...res, forced:true});
-    } else { results.push(res); }
+    results.push(rollOnce(level, st));
   }
   persist();
   return results;
@@ -208,9 +200,6 @@ function doPull(level, times){
 
 const pointsEl = document.getElementById('points');
 
-const pityEl = document.getElementById('pity');
-const pullsEl = document.getElementById('pulls');
-const ownedEl = document.getElementById('owned');
 const collectionEl = document.getElementById('collection');
 const resultTextEl = document.getElementById('resultText');
 const logEl = document.getElementById('log');
@@ -230,11 +219,6 @@ const I18N = {
     pullHint: 'Raretés : Commun×1, Peu commun×2, Rare×5, Épique×10, Légendaire×25.',
     lastResultTitle: 'Dernier résultat',
     footer: 'Idle: 1 tirage gratuit par minute (y compris hors‑ligne, sans animation, sauf gros tirages).',
-    statsHeader: 'Stats',
-    owned: 'Éléments possédés :',
-    pity: 'Pitié:',
-    pulls: 'Tirages totaux:',
-    lastSave: 'Dernière sauvegarde :',
     collectionTitle: 'Collection',
     shopTitle: 'Magasin',
     back: '⟵ Retour'
@@ -252,11 +236,6 @@ const I18N = {
     pullHint: 'Rarities: Common×1, Uncommon×2, Rare×5, Epic×10, Legendary×25.',
     lastResultTitle: 'Last result',
     footer: 'Idle: 1 free pull per minute (including offline, without animation, except big pulls).',
-    statsHeader: 'Stats',
-    owned: 'Owned elements:',
-    pity: 'Pity:',
-    pulls: 'Total pulls:',
-    lastSave: 'Last save:',
     collectionTitle: 'Collection',
     shopTitle: 'Shop',
     back: '⟵ Back'
@@ -284,9 +263,7 @@ function renderTop(){
   const st = state;
   const total = roundDisplay(computePoints(st));
   pointsEl.textContent = total;
-  pityEl.textContent = st.pity;
-  pullsEl.textContent = st.pulls;
-  ownedEl.textContent = roundDisplay(computeOwned(st));
+
   refreshLevelSelector();
 }
 

@@ -1,8 +1,6 @@
 function emptyState(){
   return {
     inventory: {},
-    pulls: 0,
-    pity: 0,
     lastTick: Date.now(),
     lastSeen: Date.now(),
     idleAccum: 0,

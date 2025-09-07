@@ -35,7 +35,6 @@ input { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.
 .atom { width:44px; height:44px; border-radius: 10px; background: rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-weight:800; font-size: 1rem; }
 .atom img{width:100%;height:100%;object-fit:contain;}
 .log { height: 260px; overflow:auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; background: rgba(0,0,0,0.25); border-radius: 12px; padding: 10px; border: 1px dashed rgba(255,255,255,0.15) }
-.pill { padding:6px 10px; border:1px solid rgba(255,255,255,0.15); border-radius: 999px; }
 .footer { margin-top:12px; font-size: 0.85rem; }
 
 /* Pages */
