@@ -116,6 +116,10 @@ function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[
 function computeOwned(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
 function computePoints(state){ return Object.entries(state.inventory).reduce((a,[id,b])=>a + (b?.count||0)*(ATOM_VALUE_MAP[id]||1), 0); }
 function getPullMultiplier(st){ return Math.pow(2, st.pullMult || 0); }
+function roundDisplay(value){
+  const decimal = value - Math.floor(value);
+  return decimal < 0.5 ? Math.floor(value) : Math.ceil(value);
+}
 
 function spendAtoms(st, amount){
   if(computePoints(st) < amount) return false;
@@ -279,11 +283,11 @@ langSelect.addEventListener('change', ()=>{
 
 function renderTop(){
   const st = state;
-  const total = computePoints(st);
+  const total = roundDisplay(computePoints(st));
   pointsEl.textContent = total;
   pityEl.textContent = st.pity;
   pullsEl.textContent = st.pulls;
-  ownedEl.textContent = computeOwned(st);
+  ownedEl.textContent = roundDisplay(computeOwned(st));
   lastSeenEl.textContent = new Date(st.lastSeen).toLocaleString();
   refreshLevelSlider();
 }
@@ -330,7 +334,7 @@ function renderCollection(){
       sym.className = 'sym';
       sym.textContent = id;
       cell.append(num, sym);
-      cell.title = `${a.name} (L${a.level}) — Possédés: ${inv.count} | Mult total: x${inv.totalMult.toFixed(2)}`;
+      cell.title = `${a.name} (L${a.level}) — Possédés: ${roundDisplay(inv.count)} | Mult total: x${roundDisplay(inv.totalMult)}`;
       collectionEl.append(cell);
     });
   });
