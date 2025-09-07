@@ -76,14 +76,21 @@ const PERIODS_RAW = [
   ]
 ];
 
+const LANTHANIDE_IDS = ["La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu"];
+const ACTINIDE_IDS = ["Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr"];
+
 let atomicNumber = 1;
 const ATOMS = [];
 PERIODS_RAW.forEach((period, idx)=>{
   period.forEach(el=>{
-    ATOMS.push({id:el.id, name:el.name, level:idx+1, baseIncome:atomicNumber});
+    let level = idx + 1;
+    if (level === 6 && LANTHANIDE_IDS.includes(el.id)) level = 8;
+    if (level === 7 && ACTINIDE_IDS.includes(el.id)) level = 9;
+    ATOMS.push({id:el.id, name:el.name, level, baseIncome:atomicNumber});
     atomicNumber++;
   });
 });
+const MAX_LEVEL = 9;
 
 const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
 const PULL10_COST = 50; // coût en atomes pour un tirage x10
@@ -110,7 +117,7 @@ function computePoints(state){ return Object.values(state.inventory).reduce((a,b
 function spendAtoms(st, amount){
   if(computePoints(st) < amount) return false;
   let remaining = amount;
-  for(let lvl=1; lvl<=7 && remaining>0; lvl++){
+  for(let lvl=1; lvl<=MAX_LEVEL && remaining>0; lvl++){
     for(const atom of ATOMS.filter(a=>a.level===lvl)){
       const inv = st.inventory[atom.id];
       if(!inv || inv.count <= 0) continue;
@@ -134,6 +141,12 @@ const DRAW_POOLS = PERIODS_RAW.map((period, idx)=>{
   if(idx > 0) pool.push(...PERIODS_RAW[0].map(el=>ATOM_MAP[el.id]));
   return pool;
 });
+DRAW_POOLS.push(
+  LANTHANIDE_IDS.map(id=>ATOM_MAP[id]).concat(PERIODS_RAW[0].map(el=>ATOM_MAP[el.id]))
+);
+DRAW_POOLS.push(
+  ACTINIDE_IDS.map(id=>ATOM_MAP[id]).concat(PERIODS_RAW[0].map(el=>ATOM_MAP[el.id]))
+);
 
 function pickAtom(level){
   const pool = DRAW_POOLS[level-1] || DRAW_POOLS[0];
@@ -314,7 +327,7 @@ const shopItemsEl = document.getElementById('shopItems');
 function renderShop(){
   shopItemsEl.innerHTML='';
   const st = state;
-  for(let lvl=2; lvl<=7; lvl++){
+  for(let lvl=2; lvl<=MAX_LEVEL; lvl++){
     if(st.levelsUnlocked >= lvl) continue;
     const card=document.createElement('div'); card.className='card';
     const btn=document.createElement('button');
