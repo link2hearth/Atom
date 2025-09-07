@@ -67,5 +67,7 @@ input { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.
 .pt-cell.lvl5{ background:rgba(231,111,81,0.6); }
 .pt-cell.lvl6{ background:rgba(157,78,221,0.6); }
 .pt-cell.lvl7{ background:rgba(186,92,186,0.6); }
+.pt-cell.lvl8{ background:rgba(206,147,216,0.6); }
+.pt-cell.lvl9{ background:rgba(233,128,252,0.6); }
 
 
