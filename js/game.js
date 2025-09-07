@@ -95,7 +95,6 @@ function persist(){
 function choiceWeighted(items, weightFn){ const total = items.reduce((a,it)=>a+weightFn(it),0); let r=Math.random()*total; for(const it of items){ r-=weightFn(it); if(r<=0) return it; } return items[items.length-1]; }
 function pickRarity(){ return choiceWeighted(RARITIES, r=>r.weight); }
 function rarityMeta(key){ return RARITIES.find(r=>r.key===key)||RARITIES[0]; }
-function pickAtom(level){ const pool = ATOMS.filter(a=>a.level===level); return pool[Math.floor(Math.random()*pool.length)]; }
 
 function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[atomId] = { count: 0, totalMult: 0 }; return state.inventory[atomId]; }
 function computePoints(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
@@ -119,6 +118,20 @@ function spendAtoms(st, amount){
 }
 
 const ATOM_MAP = Object.fromEntries(ATOMS.map(a=>[a.id, a]));
+
+// Pools de tirage par période (lignes horizontales)
+const DRAW_POOLS = PERIODS_RAW.map((period, idx)=>{
+  const pool = period.map(el=>ATOM_MAP[el.id]);
+  // Inclure H et He dans les tirages des autres groupes
+  if(idx > 0) pool.push(...PERIODS_RAW[0].map(el=>ATOM_MAP[el.id]));
+  return pool;
+});
+
+function pickAtom(level){
+  const pool = DRAW_POOLS[level-1] || DRAW_POOLS[0];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
 const RARITY_ORDER = ["Commun","Peu commun","Rare","Épique","Légendaire"];
 
 // ===== Tirages
