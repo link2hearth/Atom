@@ -123,13 +123,15 @@ const RARITY_ORDER = ["Commun","Peu commun","Rare","Épique","Légendaire"];
 
 // ===== Tirages
 function rollOnce(level, userState, {forceMinRarity=null}={}){
-  const rar = forceMinRarity ? RARITIES.find(r=>r.key===forceMinRarity) : pickRarity();
+  const baseRar = forceMinRarity ? RARITIES.find(r=>r.key===forceMinRarity) : pickRarity();
+  const multRar = pickRarity();
   const atom = pickAtom(level);
-  const bonus = {mult: rar.amount};
+  const finalMult = baseRar.amount * multRar.amount;
+  const bonus = {mult: finalMult};
   const inv = ensureInv(userState, atom.id); inv.count += bonus.mult; inv.totalMult += bonus.mult;
   userState.pulls += 1;
-  userState.pity = (["Rare","Épique","Légendaire"].includes(rar.key)) ? 0 : (userState.pity + 1);
-  return { atom, bonus, rarity: rar.key, level };
+  userState.pity = (["Rare","Épique","Légendaire"].includes(baseRar.key)) ? 0 : (userState.pity + 1);
+  return { atom, bonus, rarityBase: baseRar.key, rarityMult: multRar.key, level };
 }
 
 function doPull(level, times){
@@ -142,7 +144,7 @@ function doPull(level, times){
   for(let i=0;i<times;i++){
     const pityBefore = st.pity;
     let res = rollOnce(level, st);
-    if(pityBefore >= PITY_THRESHOLD && ["Commun","Peu commun"].includes(res.rarity)){
+    if(pityBefore >= PITY_THRESHOLD && ["Commun","Peu commun"].includes(res.rarityBase)){
       res = rollOnce(level, st, {forceMinRarity:"Rare"}); results.push({...res, forced:true});
     } else { results.push(res); }
   }
@@ -316,8 +318,7 @@ function renderShop(){
 }
 
 function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; default: return ''; } }
-function multTextClass(m){ if(m>=25) return 't-mult-x25'; if(m>=10) return 't-mult-x10'; if(m>=5) return 't-mult-x5'; if(m>=2) return 't-mult-x2'; return 't-mult-x1'; }
-function pushLogRich(res){ const rarityCls = rarityTextClass(res.rarity); const multCls = multTextClass(res.bonus.mult); const p = document.createElement('div'); p.innerHTML = `<span class="${rarityCls}">${res.atom.name} [${res.atom.id}] — ${res.rarity}</span> — bonus <b class="${multCls}">x${res.bonus.mult}</b>${res.forced?" (pitié)":""}`; logEl.prepend(p); }
+function pushLogRich(res){ const rarityCls = rarityTextClass(res.rarityBase); const multCls = rarityTextClass(res.rarityMult); const p = document.createElement('div'); p.innerHTML = `<span class="${rarityCls}">${res.atom.name} [${res.atom.id}] — ${res.rarityBase}</span> — bonus <b class="${multCls}">x${res.bonus.mult}</b> (${res.rarityMult})${res.forced?" (pitié)":""}`; logEl.prepend(p); }
 
 // ===== Pages
 const pageMain = document.getElementById('page-main');
@@ -342,7 +343,7 @@ btnBackShop.addEventListener('click', ()=> showPage('main'));
 
 // ===== Tirages UI
 let pulling = false;
-async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btnPull1, btnPull10].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btnPull1, btnPull10].forEach(b=> b.disabled=false); persist(); }
+async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btnPull1, btnPull10].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarityBase); const multCls = rarityTextClass(r.rarityMult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarityBase}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b> (${r.rarityMult})${r.forced?" (pitié)":""}`; pushLogRich(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarityBase); const multCls = rarityTextClass(r.rarityMult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarityBase}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b> (${r.rarityMult})${r.forced?" (pitié)":""}`; pushLogRich(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btnPull1, btnPull10].forEach(b=> b.disabled=false); persist(); }
 
 // ===== Idle en ligne (1 tirage/min, discret)
 
