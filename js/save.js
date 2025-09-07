@@ -16,6 +16,10 @@ function computePoints(state){
 }
 
 export function loadState(){
+  if (typeof localStorage === 'undefined') {
+    console.warn('Persistence disabled: no localStorage');
+    return emptyState();
+  }
   try {
     const raw = localStorage.getItem('atom-save');
     if(!raw) return emptyState();
@@ -30,6 +34,10 @@ export function loadState(){
 }
 
 export function saveState(state){
+  if (typeof localStorage === 'undefined') {
+    console.warn('Persistence disabled: no localStorage');
+    return;
+  }
   const data = {
     ...state,
     atomCount: computePoints(state),
