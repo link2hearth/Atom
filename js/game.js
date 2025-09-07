@@ -1,12 +1,12 @@
 
-import { emptyState, loadAccounts, getUser, setUser, ensureUser, getCurrentUser, setCurrentUser } from './auth.js';
+import { loadState, saveState } from './save.js';
 
 /**
  * ATOM GACHA — Prototype Idle (v4)
  * — Points = somme des atomes possédés (affichés en haut). Ils serviront de monnaie plus tard.
  * — Idle réimaginé: **1 tirage L1 gratuit / minute**, en ligne et hors-ligne.
  * — Hors-ligne: on simule des tirages sans animation; on **log seulement les gros tirages** (baseIncome×mult > 500) à 2 logs/s + particules.
- * — Système de compte local (pseudo + mot de passe) avec stockage local multi-comptes.
+ * — Sauvegarde locale automatique dans un fichier `.sav`.
  */
 
 // ===== Raretés par niveau
@@ -66,25 +66,13 @@ const COSTS_L1 = { pull1: 0, pull10: 90 };
 const COSTS_L2 = { pull1: 100, pull10: 900 };
 const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
 
-// ===== Comptes & Sauvegarde multi-profils
+// ===== Sauvegarde locale
 
-let accounts = loadAccounts();
-let currentUser = getCurrentUser();
+let state = loadState();
 
-if(!currentUser){
-  ensureUser(accounts, 'guest');
-  setCurrentUser('guest');
-  currentUser = 'guest';
-} else {
-  ensureUser(accounts, currentUser);
-}
-
-function saveState(){
-  if(!currentUser) return;
-  const u = getUser(accounts, currentUser);
-  if(!u) return;
-  u.state.lastSeen = Date.now();
-  setUser(accounts, currentUser, u);
+function persist(){
+  state.lastSeen = Date.now();
+  saveState(state);
 }
 
 
@@ -131,9 +119,7 @@ function rollOnce(level, userState, {forceMinRarity=null}={}){
 }
 
 function doPull(level, times){
-  if(!currentUser) return false;
-
-  const u = getUser(accounts, currentUser); const st = u.state;
+  const st = state;
 
   // coût interne (L1×1 gratuit)
   let cost = 0; if(level===1){ cost = (times===10? COSTS_L1.pull10 : COSTS_L1.pull1); } else { cost = (times===10? COSTS_L2.pull10 : COSTS_L2.pull1); }
@@ -151,7 +137,7 @@ function doPull(level, times){
     } else { results.push(res); }
   }
 
-  setUser(accounts, currentUser, u); // sauvegarde
+  persist();
 
   return results;
 }
@@ -168,35 +154,19 @@ const collectionEl = document.getElementById('collection');
 const resultTextEl = document.getElementById('resultText');
 const logEl = document.getElementById('log');
 
-const userLabel = document.getElementById('userLabel');
 
 function renderTop(){
-  if(!currentUser){
-    pointsEl.textContent = '0';
-    pityEl.textContent = '0';
-    pullsEl.textContent = '0';
-    ownedEl.textContent = '0';
-    lastSeenEl.textContent = '—';
-    userLabel.textContent = 'Compte: —';
-    return;
-  }
-  const st = getUser(accounts, currentUser).state;
+  const st = state;
   pointsEl.textContent = computePoints(st);
-
   pityEl.textContent = st.pity;
   pullsEl.textContent = st.pulls;
   ownedEl.textContent = computePoints(st);
   lastSeenEl.textContent = new Date(st.lastSeen).toLocaleString();
-
-  userLabel.textContent = 'Compte: ' + (currentUser === 'guest' ? 'Invité' : currentUser);
-
 }
 
 function renderCollection(){
   collectionEl.innerHTML = '';
-  if(!currentUser) return;
-
-  const st = getUser(accounts, currentUser).state;
+  const st = state;
 
   for(const a of ATOMS){
     const inv = st.inventory[a.id] || {count:0,totalMult:0};
@@ -268,22 +238,22 @@ function fxForResult(res){ const meta = rarityMeta(res.level, res.rarity); const
 
 // ===== Tirages UI
 let pulling = false;
-async function pullUI(level, times){ if(!currentUser) { pushLog('<i>Connecte-toi d\'abord.</i>'); return; } if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=false); saveState(); }
+async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=false); persist(); }
 
 // ===== Idle en ligne (1 tirage/min, discret)
 
-function idleTick(){ if(!currentUser) return; const u = getUser(accounts, currentUser); const st = u.state; const now = Date.now(); const dt = now - (st.lastTick || now); st.lastTick = now; st.idleAccum = (st.idleAccum || 0) + dt; const ONE = 60000; while(st.idleAccum >= ONE){ st.idleAccum -= ONE; const res = rollOnce(1, st); // pas d'anim ici
+function idleTick(){ const st = state; const now = Date.now(); const dt = now - (st.lastTick || now); st.lastTick = now; st.idleAccum = (st.idleAccum || 0) + dt; const ONE = 60000; while(st.idleAccum >= ONE){ st.idleAccum -= ONE; const res = rollOnce(1, st); // pas d'anim ici
   // On garde seulement les gros tirages pour le log différé
   const total = res.atom.baseIncome * res.bonus.mult; if(total > 500){ queueBig(res); }
  }
- setUser(accounts, currentUser, u); renderTop(); }
+ persist(); renderTop(); }
 setInterval(idleTick, 1000);
 
 // ===== Hors-ligne: reconstitution à la connexion
-function applyOffline(){ if(!currentUser) return; const u = getUser(accounts, currentUser); const st = u.state; const now = Date.now(); const minutes = Math.floor((now - (st.lastSeen || now))/60000); st.lastSeen = now; if(minutes <= 0){ setUser(accounts, currentUser, u); return; }
+function applyOffline(){ const st = state; const now = Date.now(); const minutes = Math.floor((now - (st.lastSeen || now))/60000); st.lastSeen = now; if(minutes <= 0){ persist(); return; }
   const bigs = [];
   for(let i=0;i<minutes;i++){ const res = rollOnce(1, st); const total = res.atom.baseIncome * res.bonus.mult; if(total > 500){ bigs.push(res); } }
-  setUser(accounts, currentUser, u); renderTop(); if(bigs.length){ playBigQueue(bigs); }
+  persist(); renderTop(); if(bigs.length){ playBigQueue(bigs); }
 
 }
 
