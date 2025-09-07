@@ -33,14 +33,14 @@
         <section class="panel">
           <h2 data-i18n="pullsHeader">Tirages</h2>
           <div class="row" style="margin-bottom:10px">
-            <button id="pull1_l1" data-i18n="pull1_l1">Tirage Lvl 1 (gratuit)</button>
-            <button id="pull10_l1" data-i18n="pull10_l1">×10 (90⚛)</button>
-            <span class="muted" data-i18n="pull1Hint">L1: x1 (70%), x5 (25%), x10 (4%), x25 (1%).</span>
+            <label for="levelSlider" data-i18n="levelLabel">Niveau :</label>
+            <input type="range" id="levelSlider" min="1" max="7" value="1" />
+            <span id="levelValue">1</span>
           </div>
-          <div class="row" style="margin-bottom:10px">
-            <button id="pull1_l2" data-i18n="pull1_l2">Tirage Lvl 2 (100⚛)</button>
-            <button id="pull10_l2" data-i18n="pull10_l2">×10 (900⚛)</button>
-            <span class="muted" data-i18n="l2note">L2 inclut <span class="t-immortel">Immortel</span>.</span>
+          <div class="row pull-buttons" style="margin-bottom:10px">
+            <button id="pull1" data-i18n="pull1">×1</button>
+            <button id="pull10" data-i18n="pull10">×10</button>
+            <span class="muted" data-i18n="pullHint">Raretés : 1, 2, 5, 10, 25.</span>
           </div>
           <div id="lastResult" class="panel" style="padding:12px; margin-bottom:12px">
             <div class="muted" data-i18n="lastResultTitle">Dernier résultat</div>

@@ -9,61 +9,74 @@
  * — Sauvegarde locale automatique dans un fichier `.sav`.
  */
 
-// ===== Raretés par niveau
-const RARITIES_L1 = [
-  {key:"Commun", weight: 60, palette:["#a7f3d0","#34d399","#059669" ]},
-  {key:"Peu commun", weight: 25, palette:["#a7f3f0","#67e8f9","#06b6d4"]},
-  {key:"Rare", weight: 12, palette:["#bfdbfe","#60a5fa","#3b82f6"]},
-  {key:"Épique", weight: 2.8, palette:["#e9d5ff","#c084fc","#a855f7"]},
-  {key:"Légendaire", weight: 0.2, palette:["#fde68a","#fbbf24","#f59e0b"]},
+// ===== Raretés
+const RARITIES = [
+  {key:"Commun", weight:60, amount:1, palette:["#a7f3d0","#34d399","#059669"]},
+  {key:"Peu commun", weight:25, amount:2, palette:["#a7f3f0","#67e8f9","#06b6d4"]},
+  {key:"Rare", weight:12, amount:5, palette:["#bfdbfe","#60a5fa","#3b82f6"]},
+  {key:"Épique", weight:2.8, amount:10, palette:["#e9d5ff","#c084fc","#a855f7"]},
+  {key:"Légendaire", weight:0.2, amount:25, palette:["#fde68a","#fbbf24","#f59e0b"]},
 ];
 
-const RARITIES_L2 = [
-  {key:"Commun", weight: 38, palette:["#a7f3d0","#34d399","#059669" ]},
-  {key:"Peu commun", weight: 28, palette:["#a7f3f0","#67e8f9","#06b6d4"]},
-  {key:"Rare", weight: 20, palette:["#bfdbfe","#60a5fa","#3b82f6"]},
-  {key:"Épique", weight: 9, palette:["#e9d5ff","#c084fc","#a855f7"]},
-  {key:"Légendaire", weight: 4.5, palette:["#fde68a","#fbbf24","#f59e0b"]},
-  {key:"Immortel", weight: 0.5, palette:["#ff0080","#ffd300","#00e5ff","#7cff00"]},
+// ===== Atomes par période du tableau périodique (Wikipedia)
+const PERIODS_RAW = [
+  [
+    {id:"H",  name:"Hydrogène"},
+    {id:"He", name:"Hélium"}
+  ],
+  [
+    {id:"Li", name:"Lithium"}, {id:"Be", name:"Béryllium"}, {id:"B", name:"Bore"}, {id:"C", name:"Carbone"},
+    {id:"N", name:"Azote"}, {id:"O", name:"Oxygène"}, {id:"F", name:"Fluor"}, {id:"Ne", name:"Néon"}
+  ],
+  [
+    {id:"Na", name:"Sodium"}, {id:"Mg", name:"Magnésium"}, {id:"Al", name:"Aluminium"}, {id:"Si", name:"Silicium"},
+    {id:"P", name:"Phosphore"}, {id:"S", name:"Soufre"}, {id:"Cl", name:"Chlore"}, {id:"Ar", name:"Argon"}
+  ],
+  [
+    {id:"K", name:"Potassium"}, {id:"Ca", name:"Calcium"}, {id:"Sc", name:"Scandium"}, {id:"Ti", name:"Titane"},
+    {id:"V", name:"Vanadium"}, {id:"Cr", name:"Chrome"}, {id:"Mn", name:"Manganèse"}, {id:"Fe", name:"Fer"},
+    {id:"Co", name:"Cobalt"}, {id:"Ni", name:"Nickel"}, {id:"Cu", name:"Cuivre"}, {id:"Zn", name:"Zinc"},
+    {id:"Ga", name:"Gallium"}, {id:"Ge", name:"Germanium"}, {id:"As", name:"Arsenic"}, {id:"Se", name:"Sélénium"},
+    {id:"Br", name:"Brome"}, {id:"Kr", name:"Krypton"}
+  ],
+  [
+    {id:"Rb", name:"Rubidium"}, {id:"Sr", name:"Strontium"}, {id:"Y", name:"Yttrium"}, {id:"Zr", name:"Zirconium"},
+    {id:"Nb", name:"Niobium"}, {id:"Mo", name:"Molybdène"}, {id:"Tc", name:"Technétium"}, {id:"Ru", name:"Ruthénium"},
+    {id:"Rh", name:"Rhodium"}, {id:"Pd", name:"Palladium"}, {id:"Ag", name:"Argent"}, {id:"Cd", name:"Cadmium"},
+    {id:"In", name:"Indium"}, {id:"Sn", name:"Étain"}, {id:"Sb", name:"Antimoine"}, {id:"Te", name:"Tellure"},
+    {id:"I", name:"Iode"}, {id:"Xe", name:"Xénon"}
+  ],
+  [
+    {id:"Cs", name:"Césium"}, {id:"Ba", name:"Baryum"}, {id:"La", name:"Lanthane"}, {id:"Ce", name:"Cérium"},
+    {id:"Pr", name:"Praséodyme"}, {id:"Nd", name:"Néodyme"}, {id:"Pm", name:"Prométhium"}, {id:"Sm", name:"Samarium"},
+    {id:"Eu", name:"Europium"}, {id:"Gd", name:"Gadolinium"}, {id:"Tb", name:"Terbium"}, {id:"Dy", name:"Dysprosium"},
+    {id:"Ho", name:"Holmium"}, {id:"Er", name:"Erbium"}, {id:"Tm", name:"Thulium"}, {id:"Yb", name:"Ytterbium"},
+    {id:"Lu", name:"Lutécium"}, {id:"Hf", name:"Hafnium"}, {id:"Ta", name:"Tantale"}, {id:"W", name:"Tungstène"},
+    {id:"Re", name:"Rhénium"}, {id:"Os", name:"Osmium"}, {id:"Ir", name:"Iridium"}, {id:"Pt", name:"Platine"},
+    {id:"Au", name:"Or"}, {id:"Hg", name:"Mercure"}, {id:"Tl", name:"Thallium"}, {id:"Pb", name:"Plomb"},
+    {id:"Bi", name:"Bismuth"}, {id:"Po", name:"Polonium"}, {id:"At", name:"Astate"}, {id:"Rn", name:"Radon"}
+  ],
+  [
+    {id:"Fr", name:"Francium"}, {id:"Ra", name:"Radium"}, {id:"Ac", name:"Actinium"}, {id:"Th", name:"Thorium"},
+    {id:"Pa", name:"Protactinium"}, {id:"U", name:"Uranium"}, {id:"Np", name:"Neptunium"}, {id:"Pu", name:"Plutonium"},
+    {id:"Am", name:"Américium"}, {id:"Cm", name:"Curium"}, {id:"Bk", name:"Berkélium"}, {id:"Cf", name:"Californium"},
+    {id:"Es", name:"Einsteinium"}, {id:"Fm", name:"Fermium"}, {id:"Md", name:"Mendélévium"}, {id:"No", name:"Nobélium"},
+    {id:"Lr", name:"Lawrencium"}, {id:"Rf", name:"Rutherfordium"}, {id:"Db", name:"Dubnium"}, {id:"Sg", name:"Seaborgium"},
+    {id:"Bh", name:"Bohrium"}, {id:"Hs", name:"Hassium"}, {id:"Mt", name:"Meitnérium"}, {id:"Ds", name:"Darmstadtium"},
+    {id:"Rg", name:"Roentgenium"}, {id:"Cn", name:"Copernicium"}, {id:"Nh", name:"Nihonium"}, {id:"Fl", name:"Flérovium"},
+    {id:"Mc", name:"Moscovium"}, {id:"Lv", name:"Livermorium"}, {id:"Ts", name:"Tennesse"}, {id:"Og", name:"Oganesson"}
+  ]
 ];
 
-// ===== Atomes (L1 + L2)
-const ATOMS = [
-  // L1
-  {id:"H",  name:"Hydrogène", rarity:"Commun",      baseIncome: 1, level:1},
-  {id:"He", name:"Hélium",     rarity:"Commun",      baseIncome: 1, level:1},
-  {id:"C",  name:"Carbone",     rarity:"Commun",      baseIncome: 1, level:1},
-  {id:"O",  name:"Oxygène",     rarity:"Commun",      baseIncome: 1, level:1},
-  {id:"N",  name:"Azote",       rarity:"Commun",      baseIncome: 1, level:1},
-  {id:"Ne", name:"Néon",        rarity:"Peu commun",  baseIncome: 3, level:1},
-  {id:"Si", name:"Silicium",    rarity:"Peu commun",  baseIncome: 3, level:1},
-  {id:"Fe", name:"Fer",         rarity:"Rare",        baseIncome: 7, level:1},
-  {id:"S",  name:"Soufre",      rarity:"Rare",        baseIncome: 7, level:1},
-  {id:"Au", name:"Or",          rarity:"Épique",      baseIncome: 20, level:1},
-  {id:"U",  name:"Uranium",     rarity:"Légendaire",  baseIncome: 50, level:1},
-  // L2 (10 nouveaux)
-  {id:"Na", name:"Sodium",      rarity:"Commun",      baseIncome: 2, level:2},
-  {id:"Mg", name:"Magnésium",   rarity:"Peu commun",  baseIncome: 5, level:2},
-  {id:"Al", name:"Aluminium",   rarity:"Peu commun",  baseIncome: 5, level:2},
-  {id:"P",  name:"Phosphore",   rarity:"Rare",        baseIncome: 9, level:2},
-  {id:"Cl", name:"Chlore",      rarity:"Rare",        baseIncome: 9, level:2},
-  {id:"Ag", name:"Argent",      rarity:"Épique",      baseIncome: 25, level:2},
-  {id:"Pt", name:"Platine",     rarity:"Légendaire",  baseIncome: 70, level:2},
-  {id:"Pu", name:"Plutonium",   rarity:"Légendaire",  baseIncome: 90, level:2},
-  {id:"Es", name:"Einsteinium", rarity:"Immortel",    baseIncome: 150, level:2},
-  {id:"Og", name:"Oganesson",   rarity:"Immortel",    baseIncome: 200, level:2},
-];
+let atomicNumber = 1;
+const ATOMS = [];
+PERIODS_RAW.forEach((period, idx)=>{
+  period.forEach(el=>{
+    ATOMS.push({id:el.id, name:el.name, level:idx+1, baseIncome:atomicNumber});
+    atomicNumber++;
+  });
+});
 
-const BONUS_TABLE = [
-  {mult: 1,  p: 0.70, label:"x1"},
-  {mult: 5,  p: 0.25, label:"x5"},
-  {mult: 10, p: 0.04, label:"x10"},
-  {mult: 25, p: 0.01, label:"x25"},
-];
-
-// coûts (L1 ×1 gratuit)
-const COSTS_L1 = { pull1: 0, pull10: 90 };
-const COSTS_L2 = { pull1: 100, pull10: 900 };
 const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
 
 // ===== Sauvegarde locale
@@ -79,67 +92,38 @@ function persist(){
 
 // ===== Jeu — utilitaires
 function choiceWeighted(items, weightFn){ const total = items.reduce((a,it)=>a+weightFn(it),0); let r=Math.random()*total; for(const it of items){ r-=weightFn(it); if(r<=0) return it; } return items[items.length-1]; }
-function pickRarity(level){ const table = level===2? RARITIES_L2 : RARITIES_L1; return choiceWeighted(table, r=>r.weight).key; }
-function rarityMeta(level, key){ const table = level===2? RARITIES_L2 : RARITIES_L1; return table.find(r=>r.key===key)||table[0]; }
-function pickAtomByRarity(level, r){ const pool = ATOMS.filter(a=>a.level===level && a.rarity===r); return pool[Math.floor(Math.random()*pool.length)]; }
-function pickBonus(){ return choiceWeighted(BONUS_TABLE, b=>b.p); }
+function pickRarity(){ return choiceWeighted(RARITIES, r=>r.weight); }
+function rarityMeta(key){ return RARITIES.find(r=>r.key===key)||RARITIES[0]; }
+function pickAtom(level){ const pool = ATOMS.filter(a=>a.level===level); return pool[Math.floor(Math.random()*pool.length)]; }
 
 function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[atomId] = { count: 0, totalMult: 0 }; return state.inventory[atomId]; }
 function computePoints(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
 
 const ATOM_MAP = Object.fromEntries(ATOMS.map(a=>[a.id, a]));
-const RARITY_ORDER = ["Commun","Peu commun","Rare","Épique","Légendaire","Immortel"];
-
-function spendAtoms(state, amount){
-  let remaining = amount;
-  for(const rar of RARITY_ORDER){
-    const ids = ATOMS.filter(a=>a.rarity===rar).map(a=>a.id);
-    for(const id of ids){
-      const inv = state.inventory[id];
-      if(!inv || inv.count<=0) continue;
-      const take = Math.min(inv.count, remaining);
-      inv.count -= take;
-      remaining -= take;
-      if(remaining<=0) break;
-    }
-    if(remaining<=0) break;
-  }
-  return remaining<=0;
-}
+const RARITY_ORDER = ["Commun","Peu commun","Rare","Épique","Légendaire"];
 
 // ===== Tirages
 function rollOnce(level, userState, {forceMinRarity=null}={}){
-  const rarity = forceMinRarity ? forceMinRarity : pickRarity(level);
-  const effectiveRarity = (userState.pity >= PITY_THRESHOLD) ? "Rare" : rarity;
-  const atom = pickAtomByRarity(level, effectiveRarity);
-  const bonus = pickBonus();
-  const inv = ensureInv(userState, atom.id); inv.count += bonus.mult; inv.totalMult += bonus.mult; // totalMult gardé pour futur
+  const rar = forceMinRarity ? RARITIES.find(r=>r.key===forceMinRarity) : pickRarity();
+  const atom = pickAtom(level);
+  const bonus = {mult: rar.amount};
+  const inv = ensureInv(userState, atom.id); inv.count += bonus.mult; inv.totalMult += bonus.mult;
   userState.pulls += 1;
-  userState.pity = (["Rare","Épique","Légendaire","Immortel"].includes(effectiveRarity)) ? 0 : (userState.pity + 1);
-  return { atom, bonus, rarity: effectiveRarity, level };
+  userState.pity = (["Rare","Épique","Légendaire"].includes(rar.key)) ? 0 : (userState.pity + 1);
+  return { atom, bonus, rarity: rar.key, level };
 }
 
 function doPull(level, times){
   const st = state;
-
-  // coût interne (L1×1 gratuit)
-  let cost = 0; if(level===1){ cost = (times===10? COSTS_L1.pull10 : COSTS_L1.pull1); } else { cost = (times===10? COSTS_L2.pull10 : COSTS_L2.pull1); }
-  if(level===1 && times===1) cost = 0;
-  if(cost>0){
-    if(computePoints(st) < cost) return null;
-    if(!spendAtoms(st, cost)) return null;
-  }
-
   const results = [];
   for(let i=0;i<times;i++){
-    const pityBefore = st.pity; let res = rollOnce(level, st);
+    const pityBefore = st.pity;
+    let res = rollOnce(level, st);
     if(pityBefore >= PITY_THRESHOLD && ["Commun","Peu commun"].includes(res.rarity)){
       res = rollOnce(level, st, {forceMinRarity:"Rare"}); results.push({...res, forced:true});
     } else { results.push(res); }
   }
-
   persist();
-
   return results;
 }
 
@@ -164,12 +148,10 @@ const I18N = {
     btnCollection: 'Collection',
     btnShop: 'Magasin',
     pullsHeader: 'Tirages',
-    pull1_l1: 'Tirage Lvl 1 (gratuit)',
-    pull10_l1: '×10 (90⚛)',
-    pull1Hint: 'L1: x1 (70%), x5 (25%), x10 (4%), x25 (1%).',
-    pull1_l2: 'Tirage Lvl 2 (100⚛)',
-    pull10_l2: '×10 (900⚛)',
-    l2note: 'L2 inclut <span class="t-immortel">Immortel</span>.',
+    levelLabel: 'Niveau :',
+    pull1: '×1',
+    pull10: '×10',
+    pullHint: 'Raretés : Commun×1, Peu commun×2, Rare×5, Épique×10, Légendaire×25.',
     lastResultTitle: 'Dernier résultat',
     footer: 'Idle: 1 tirage gratuit par minute (y compris hors‑ligne, sans animation, sauf gros tirages).',
     statsHeader: 'Stats',
@@ -188,12 +170,10 @@ const I18N = {
     btnCollection: 'Collection',
     btnShop: 'Shop',
     pullsHeader: 'Pulls',
-    pull1_l1: 'Level 1 Pull (free)',
-    pull10_l1: '×10 (90⚛)',
-    pull1Hint: 'L1: x1 (70%), x5 (25%), x10 (4%), x25 (1%).',
-    pull1_l2: 'Level 2 Pull (100⚛)',
-    pull10_l2: '×10 (900⚛)',
-    l2note: 'Level 2 includes <span class="t-immortel">Immortal</span>.',
+    levelLabel: 'Level:',
+    pull1: '×1',
+    pull10: '×10',
+    pullHint: 'Rarities: Common×1, Uncommon×2, Rare×5, Epic×10, Legendary×25.',
     lastResultTitle: 'Last result',
     footer: 'Idle: 1 free pull per minute (including offline, without animation, except big pulls).',
     statsHeader: 'Stats',
@@ -248,9 +228,8 @@ function renderCollection(){
     const info=document.createElement('div'); info.style.display='grid'; info.style.gap='6px';
     const title=document.createElement('div'); title.style.fontWeight='800'; title.innerHTML = `${a.name} <span class="muted">(L${a.level})</span>`;
     const meta=document.createElement('div');
-    const rar=document.createElement('span'); rar.className=`badge rar-${a.rarity.replace(' ',' ')}`; rar.textContent=a.rarity;
     const gen=document.createElement('span'); gen.className='badge'; gen.textContent=`EPS/base ${a.baseIncome}`;
-    meta.append(rar,' ',gen);
+    meta.append(gen);
     const own=document.createElement('div'); own.className='muted'; own.textContent=`Possédés: ${inv.count} | Mult total: x${inv.totalMult.toFixed(2)}`;
     info.append(title, meta, own); card.append(icon, info); collectionEl.append(card);
   }
@@ -270,8 +249,8 @@ function renderShop(){
   }
 }
 
-function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; case 'Immortel': return 't-immortel'; default: return ''; } }
-function multTextClass(m){ if(m>=50) return 't-mult-x50'; if(m>=25) return 't-mult-x25'; if(m>=10) return 't-mult-x10'; if(m>=5) return 't-mult-x5'; return 't-mult-x1'; }
+function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; default: return ''; } }
+function multTextClass(m){ if(m>=25) return 't-mult-x25'; if(m>=10) return 't-mult-x10'; if(m>=5) return 't-mult-x5'; if(m>=2) return 't-mult-x2'; return 't-mult-x1'; }
 function pushLogRich(res){ const rarityCls = rarityTextClass(res.rarity); const multCls = multTextClass(res.bonus.mult); const p = document.createElement('div'); p.innerHTML = `<span class="${rarityCls}">${res.atom.name} [${res.atom.id}] — ${res.rarity}</span> — bonus <b class="${multCls}">x${res.bonus.mult}</b>${res.forced?" (pitié)":""}`; logEl.prepend(p); }
 
 // ===== Pages
@@ -320,14 +299,11 @@ function playSound(kind){
   currentSound = osc;
 }
 
-// Effet spécial Immortel
-function celebrateImmortal(){ const flash = document.getElementById('flash'); flash.classList.remove('show'); void flash.offsetWidth; flash.classList.add('show'); const colors = ["#ff0080","#ff8c00","#ffd300","#00e5ff","#7cff00","#b400ff"]; for(let i=0;i<5;i++){ const ring = document.createElement('div'); ring.className='ring'; ring.style.borderColor = colors[i%colors.length]; ring.style.animationDelay = `${i*80}ms`; document.body.appendChild(ring); setTimeout(()=> ring.remove(), 1400 + i*80); } document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake'); }
-
-function fxForResult(res){ const meta = rarityMeta(res.level, res.rarity); const total = res.atom.baseIncome * res.bonus.mult; let mult = 1; if(res.rarity==='Rare') mult=1.4; else if(res.rarity==='Épique') mult=2; else if(res.rarity==='Légendaire') mult=3; else if(res.rarity==='Immortel') mult=5.5; burstEdges(total*mult, meta.palette); if(total>=10) burstCelebration(total); if(res.rarity==='Immortel') celebrateImmortal(); playSound(total>=50?'big':'small'); }
+function fxForResult(res){ const meta = rarityMeta(res.rarity); const total = res.atom.baseIncome * res.bonus.mult; let mult = 1; if(res.rarity==='Rare') mult=1.4; else if(res.rarity==='Épique') mult=2; else if(res.rarity==='Légendaire') mult=3; burstEdges(total*mult, meta.palette); if(total>=10) burstCelebration(total); playSound(total>=50?'big':'small'); }
 
 // ===== Tirages UI
 let pulling = false;
-async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btn1l1, btn10l1, btn1l2, btn10l2].forEach(b=> b.disabled=false); persist(); }
+async function pullUI(level, times){ if(pulling) return; const results = doPull(level, times); if(!results){ pushLog('<i>Pas assez d\'atomes.</i>'); return; } pulling = true; [btnPull1, btnPull10].forEach(b=> b.disabled=true); if(times===1){ const r = results[0]; const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); } else { for(const r of results){ const rarityCls = rarityTextClass(r.rarity); const multCls = multTextClass(r.bonus.mult); resultTextEl.innerHTML = `<span class="${rarityCls}">${r.atom.name} [${r.atom.id}] — ${r.rarity}</span> — bonus <b class="${multCls}">x${r.bonus.mult}</b>${r.forced?" (pitié)":""}`; pushLogRich(r); fxForResult(r); await new Promise(res=>setTimeout(res, 200)); } } renderTop(); pulling = false; [btnPull1, btnPull10].forEach(b=> b.disabled=false); persist(); }
 
 // ===== Idle en ligne (1 tirage/min, discret)
 
@@ -353,14 +329,13 @@ function playBigQueue(prefill){ if(prefill && prefill.length) bigQueue.push(...p
 
 
 // ===== Boutons de tirage
-const btn1l1 = document.getElementById('pull1_l1');
-const btn10l1 = document.getElementById('pull10_l1');
-const btn1l2 = document.getElementById('pull1_l2');
-const btn10l2 = document.getElementById('pull10_l2');
-btn1l1.addEventListener('click', ()=> pullUI(1,1));
-btn10l1.addEventListener('click', ()=> pullUI(1,10));
-btn1l2.addEventListener('click', ()=> pullUI(2,1));
-btn10l2.addEventListener('click', ()=> pullUI(2,10));
+const btnPull1 = document.getElementById('pull1');
+const btnPull10 = document.getElementById('pull10');
+const levelSlider = document.getElementById('levelSlider');
+const levelValue = document.getElementById('levelValue');
+levelSlider.addEventListener('input', ()=>{ levelValue.textContent = levelSlider.value; });
+btnPull1.addEventListener('click', ()=> pullUI(parseInt(levelSlider.value),1));
+btnPull10.addEventListener('click', ()=> pullUI(parseInt(levelSlider.value),10));
 
 // ===== Helpers
 function pushLog(html){ const p=document.createElement('div'); p.innerHTML=html; logEl.prepend(p); }
