@@ -1,5 +1,5 @@
 
-import { loadState, saveState } from './save.js';
+// Save/load helpers are now loaded from save.js (classic script)
 
 /**
  * ATOM GACHA — Prototype Idle (v4)

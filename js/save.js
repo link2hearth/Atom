@@ -1,4 +1,4 @@
-export function emptyState(){
+function emptyState(){
   return {
     inventory: {},
     pulls: 0,
@@ -15,7 +15,7 @@ function computePoints(state){
   return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0);
 }
 
-export function loadState(){
+function loadState(){
   if (typeof localStorage === 'undefined') {
     console.warn('Persistence disabled: no localStorage');
     return emptyState();
@@ -33,7 +33,7 @@ export function loadState(){
   }
 }
 
-export function saveState(state){
+function saveState(state){
   if (typeof localStorage === 'undefined') {
     console.warn('Persistence disabled: no localStorage');
     return;
@@ -49,3 +49,7 @@ export function saveState(state){
     // ignore quota errors
   }
 }
+
+// Expose helpers globally for game.js
+window.loadState = loadState;
+window.saveState = saveState;
