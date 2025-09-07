@@ -10,16 +10,19 @@
 
   <header class="wrap">
     <div class="title"><div class="dot"></div> <span data-i18n="title">Atom Gacha — Prototype</span></div>
-    <div class="row">
-      <div id="pointsStat" class="stat"><span data-i18n="pointsStat">◆ Points (total atomes):</span> <span id="points">0</span></div>
-      <div class="stat"><span data-i18n="idleStat">⏱️ Idle: 1 tirage/min</span></div>
-
-      <button id="btnCollection" class="secondary" data-i18n="btnCollection">Collection</button>
-      <button id="btnShop" class="secondary" data-i18n="btnShop">Magasin</button>
-      <select id="langSelect">
-        <option value="fr">FR</option>
-        <option value="en">EN</option>
-      </select>
+    <div class="topbar">
+      <div class="menus">
+        <button id="btnCollection" class="secondary" data-i18n="btnCollection">Collection</button>
+        <button id="btnShop" class="secondary" data-i18n="btnShop">Magasin</button>
+        <select id="langSelect">
+          <option value="fr">FR</option>
+          <option value="en">EN</option>
+        </select>
+      </div>
+      <div class="accounts">
+        <div id="pointsStat" class="stat"><span data-i18n="pointsStat">◆ Points (total atomes):</span> <span id="points">0</span></div>
+        <div class="stat"><span data-i18n="idleStat">⏱️ Idle: 1 tirage/min</span></div>
+      </div>
     </div>
   </header>
 
@@ -27,14 +30,20 @@
 
     <!-- Page Principale -->
     <section id="page-main" class="page active">
+      <div id="levelSelector" class="group-selector">
+        <button class="level-btn active" data-level="1">1</button>
+        <button class="level-btn" data-level="2">2</button>
+        <button class="level-btn" data-level="3">3</button>
+        <button class="level-btn" data-level="4">4</button>
+        <button class="level-btn" data-level="5">5</button>
+        <button class="level-btn" data-level="6">6</button>
+        <button class="level-btn" data-level="7">7</button>
+        <button class="level-btn" data-level="8">8</button>
+        <button class="level-btn" data-level="9">9</button>
+      </div>
       <div class="panels">
         <section class="panel">
           <h2 data-i18n="pullsHeader">Tirages</h2>
-          <div class="row" style="margin-bottom:10px">
-            <label for="levelSlider" data-i18n="levelLabel">Niveau :</label>
-            <input type="range" id="levelSlider" min="1" max="9" value="1" />
-            <span id="levelValue">1</span>
-          </div>
           <div class="row pull-buttons" style="margin-bottom:10px">
             <button id="pull1" data-i18n="pull1">×1</button>
             <button id="pull10" data-i18n="pull10">×10</button>
@@ -54,7 +63,6 @@
             <div class="pill"><span data-i18n="owned">Éléments possédés :</span> <span id="owned">0</span></div>
             <div class="pill"><span data-i18n="pity">Pitié:</span> <span id="pity">0</span>/50</div>
             <div class="pill"><span data-i18n="pulls">Tirages totaux:</span> <span id="pulls">0</span></div>
-            <div class="pill"><span data-i18n="lastSave">Dernière sauvegarde :</span> <span id="lastSeen">—</span></div>
           </div>
         </section>
       </div>

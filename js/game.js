@@ -211,7 +211,6 @@ const pointsEl = document.getElementById('points');
 const pityEl = document.getElementById('pity');
 const pullsEl = document.getElementById('pulls');
 const ownedEl = document.getElementById('owned');
-const lastSeenEl = document.getElementById('lastSeen');
 const collectionEl = document.getElementById('collection');
 const resultTextEl = document.getElementById('resultText');
 const logEl = document.getElementById('log');
@@ -288,8 +287,7 @@ function renderTop(){
   pityEl.textContent = st.pity;
   pullsEl.textContent = st.pulls;
   ownedEl.textContent = roundDisplay(computeOwned(st));
-  lastSeenEl.textContent = new Date(st.lastSeen).toLocaleString();
-  refreshLevelSlider();
+  refreshLevelSelector();
 }
 
 const PT_LAYOUT = [
@@ -479,18 +477,29 @@ function playBigQueue(prefill){ if(prefill && prefill.length) bigQueue.push(...p
 // ===== Boutons de tirage
 const btnPull1 = document.getElementById('pull1');
 const btnPull10 = document.getElementById('pull10');
-const levelSlider = document.getElementById('levelSlider');
-const levelValue = document.getElementById('levelValue');
-function refreshLevelSlider(){
-  levelSlider.max = state.levelsUnlocked;
-  if(parseInt(levelSlider.value) > state.levelsUnlocked){
-    levelSlider.value = state.levelsUnlocked;
-    levelValue.textContent = state.levelsUnlocked;
+const levelButtons = Array.from(document.querySelectorAll('.level-btn'));
+let currentLevel = 1;
+function setLevel(l){
+  currentLevel = l;
+  levelButtons.forEach(btn=>{
+    btn.classList.toggle('active', parseInt(btn.dataset.level) === l);
+  });
+}
+function refreshLevelSelector(){
+  levelButtons.forEach(btn=>{
+    const lvl = parseInt(btn.dataset.level);
+    btn.disabled = lvl > state.levelsUnlocked;
+  });
+  if(currentLevel > state.levelsUnlocked){
+    setLevel(state.levelsUnlocked);
   }
 }
-levelSlider.addEventListener('input', ()=>{ levelValue.textContent = levelSlider.value; });
-btnPull1.addEventListener('click', ()=> pullUI(parseInt(levelSlider.value),1));
-btnPull10.addEventListener('click', ()=> pullUI(parseInt(levelSlider.value),10));
+levelButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=> setLevel(parseInt(btn.dataset.level)));
+});
+setLevel(1);
+btnPull1.addEventListener('click', ()=> pullUI(currentLevel,1));
+btnPull10.addEventListener('click', ()=> pullUI(currentLevel,10));
 
 // ===== Helpers
 function pushLog(html){ const p=document.createElement('div'); p.innerHTML=html; logEl.prepend(p); }
