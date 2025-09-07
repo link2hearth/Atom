@@ -199,6 +199,7 @@ function doPull(level, times){
 // ===== Effets & UI
 
 const pointsEl = document.getElementById('points');
+
 const collectionEl = document.getElementById('collection');
 const resultTextEl = document.getElementById('resultText');
 const logEl = document.getElementById('log');
@@ -262,6 +263,7 @@ function renderTop(){
   const st = state;
   const total = roundDisplay(computePoints(st));
   pointsEl.textContent = total;
+
   refreshLevelSelector();
 }
 
