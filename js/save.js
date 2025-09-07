@@ -9,6 +9,7 @@ function emptyState(){
     credits: { gems: 0, energy: 0 },
     language: 'fr',
     levelsUnlocked: 1,
+    pullMult: 0,
   };
 }
 
@@ -29,6 +30,7 @@ function loadState(){
     if(!st.credits) st.credits = { gems:0, energy:0 };
     if(!st.language) st.language = 'fr';
     if(!st.levelsUnlocked) st.levelsUnlocked = 1;
+    if(typeof st.pullMult !== 'number') st.pullMult = 0;
     return st;
   } catch(e){
     return emptyState();

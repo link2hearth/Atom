@@ -99,6 +99,7 @@ const PULL10_COST = 50; // coût en atomes pour un tirage x10
 
 let state = loadState();
 if(!state.language) state.language = 'fr';
+if(typeof state.pullMult !== 'number') state.pullMult = 0;
 
 function persist(){
   state.lastSeen = Date.now();
@@ -113,6 +114,7 @@ function rarityMeta(key, list=RARITIES){ return list.find(r=>r.key===key)||list[
 
 function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[atomId] = { count: 0, totalMult: 0 }; return state.inventory[atomId]; }
 function computePoints(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
+function getPullMultiplier(st){ return Math.pow(2, st.pullMult || 0); }
 
 function spendAtoms(st, amount){
   if(computePoints(st) < amount) return false;
@@ -160,12 +162,13 @@ function rollOnce(level, userState, {forceMinRarity=null}={}){
   const baseRar = forceMinRarity ? BASE_RARITIES.find(r=>r.key===forceMinRarity) : pickRarity(BASE_RARITIES);
   const multRar = pickRarity();
   const atom = pickAtom(level);
-  const finalMult = baseRar.amount * multRar.amount;
+  const purchaseMult = getPullMultiplier(userState);
+  const finalMult = baseRar.amount * multRar.amount * purchaseMult;
   const bonus = {mult: finalMult};
   const inv = ensureInv(userState, atom.id); inv.count += bonus.mult; inv.totalMult += bonus.mult;
   userState.pulls += 1;
   userState.pity = (["Rare","Épique","Légendaire"].includes(baseRar.key)) ? 0 : (userState.pity + 1);
-  return { atom, bonus, rarityBase: baseRar.key, rarityMult: multRar.key, baseAmount: baseRar.amount, multAmount: multRar.amount, level };
+  return { atom, bonus, rarityBase: baseRar.key, rarityMult: multRar.key, baseAmount: baseRar.amount, multAmount: multRar.amount * purchaseMult, level };
 }
 
 function doPull(level, times){
@@ -345,6 +348,23 @@ function renderShop(){
     card.append(btn);
     shopItemsEl.append(card);
   }
+  const multCount = st.pullMult || 0;
+  const multCost = 1000 * Math.pow(10, multCount);
+  const cardMult = document.createElement('div'); cardMult.className='card';
+  const btnMult = document.createElement('button');
+  btnMult.textContent = `Multiplicateur x2 (possédé: ${multCount}) — ${multCost} atomes`;
+  btnMult.addEventListener('click', ()=>{
+    if(spendAtoms(st, multCost)){
+      st.pullMult = multCount + 1;
+      persist();
+      renderTop();
+      renderShop();
+    } else {
+      pushLog("<i>Pas assez d'atomes.</i>");
+    }
+  });
+  cardMult.append(btnMult);
+  shopItemsEl.append(cardMult);
   if(!shopItemsEl.children.length){
     const p=document.createElement('div'); p.className='muted'; p.textContent='Aucun objet disponible';
     shopItemsEl.append(p);
