@@ -1,7 +1,3 @@
-import fs from 'fs';
-
-const SAVE_PATH = './save.sav';
-
 export function emptyState(){
   return {
     inventory: {},
@@ -11,6 +7,7 @@ export function emptyState(){
     lastSeen: Date.now(),
     idleAccum: 0,
     credits: { gems: 0, energy: 0 },
+    language: 'fr',
   };
 }
 
@@ -20,10 +17,12 @@ function computePoints(state){
 
 export function loadState(){
   try {
-    const raw = fs.readFileSync(SAVE_PATH, 'utf8');
+    const raw = localStorage.getItem('atom-save');
+    if(!raw) return emptyState();
     const st = JSON.parse(raw);
     if(!st.inventory) st.inventory = {};
     if(!st.credits) st.credits = { gems:0, energy:0 };
+    if(!st.language) st.language = 'fr';
     return st;
   } catch(e){
     return emptyState();
@@ -36,5 +35,9 @@ export function saveState(state){
     atomCount: computePoints(state),
     savedAt: Date.now()
   };
-  fs.writeFileSync(SAVE_PATH, JSON.stringify(data));
+  try {
+    localStorage.setItem('atom-save', JSON.stringify(data));
+  } catch(e) {
+    // ignore quota errors
+  }
 }

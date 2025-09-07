@@ -11,13 +11,17 @@
   <div id="flash" class="flash"></div>
 
   <header class="wrap">
-    <div class="title"><div class="dot"></div> Atom Gacha — Prototype</div>
+    <div class="title"><div class="dot"></div> <span data-i18n="title">Atom Gacha — Prototype</span></div>
     <div class="row">
-      <div id="pointsStat" class="stat">◆ Points (total atomes): <span id="points">0</span></div>
-      <div class="stat">⏱️ Idle: 1 tirage/min</div>
+      <div id="pointsStat" class="stat"><span data-i18n="pointsStat">◆ Points (total atomes):</span> <span id="points">0</span></div>
+      <div class="stat"><span data-i18n="idleStat">⏱️ Idle: 1 tirage/min</span></div>
 
-      <button id="btnCollection" class="secondary">Collection</button>
-      <button id="btnShop" class="secondary">Magasin</button>
+      <button id="btnCollection" class="secondary" data-i18n="btnCollection">Collection</button>
+      <button id="btnShop" class="secondary" data-i18n="btnShop">Magasin</button>
+      <select id="langSelect">
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+      </select>
     </div>
   </header>
 
@@ -27,32 +31,32 @@
     <section id="page-main" class="page active">
       <div class="panels">
         <section class="panel">
-          <h2>Tirages</h2>
+          <h2 data-i18n="pullsHeader">Tirages</h2>
           <div class="row" style="margin-bottom:10px">
-            <button id="pull1_l1">Tirage Lvl 1 (gratuit)</button>
-            <button id="pull10_l1">×10 (90⚛)</button>
-            <span class="muted">L1: x1 (70%), x5 (25%), x10 (4%), x25 (1%).</span>
+            <button id="pull1_l1" data-i18n="pull1_l1">Tirage Lvl 1 (gratuit)</button>
+            <button id="pull10_l1" data-i18n="pull10_l1">×10 (90⚛)</button>
+            <span class="muted" data-i18n="pull1Hint">L1: x1 (70%), x5 (25%), x10 (4%), x25 (1%).</span>
           </div>
           <div class="row" style="margin-bottom:10px">
-            <button id="pull1_l2">Tirage Lvl 2 (100⚛)</button>
-            <button id="pull10_l2">×10 (900⚛)</button>
-            <span class="muted">L2 inclut <span class="t-immortel">Immortel</span>.</span>
+            <button id="pull1_l2" data-i18n="pull1_l2">Tirage Lvl 2 (100⚛)</button>
+            <button id="pull10_l2" data-i18n="pull10_l2">×10 (900⚛)</button>
+            <span class="muted" data-i18n="l2note">L2 inclut <span class="t-immortel">Immortel</span>.</span>
           </div>
           <div id="lastResult" class="panel" style="padding:12px; margin-bottom:12px">
-            <div class="muted">Dernier résultat</div>
+            <div class="muted" data-i18n="lastResultTitle">Dernier résultat</div>
             <div id="resultText" style="font-weight:800; margin-top:4px">—</div>
           </div>
           <div class="log" id="log"></div>
-          <div class="footer muted">Idle: 1 tirage gratuit par minute (y compris hors‑ligne, sans animation, sauf gros tirages).</div>
+          <div class="footer muted" data-i18n="footer">Idle: 1 tirage gratuit par minute (y compris hors‑ligne, sans animation, sauf gros tirages).</div>
         </section>
 
         <section class="panel">
-          <h2>Stats</h2>
+          <h2 data-i18n="statsHeader">Stats</h2>
           <div class="row">
-            <div class="pill">Éléments possédés : <span id="owned">0</span></div>
-            <div class="pill">Pitié: <span id="pity">0</span>/50</div>
-            <div class="pill">Tirages totaux: <span id="pulls">0</span></div>
-            <div class="pill">Dernière sauvegarde : <span id="lastSeen">—</span></div>
+            <div class="pill"><span data-i18n="owned">Éléments possédés :</span> <span id="owned">0</span></div>
+            <div class="pill"><span data-i18n="pity">Pitié:</span> <span id="pity">0</span>/50</div>
+            <div class="pill"><span data-i18n="pulls">Tirages totaux:</span> <span id="pulls">0</span></div>
+            <div class="pill"><span data-i18n="lastSave">Dernière sauvegarde :</span> <span id="lastSeen">—</span></div>
           </div>
         </section>
       </div>
@@ -61,10 +65,10 @@
     <!-- Page Collection -->
     <section id="page-collection" class="page">
       <div class="row" style="margin-bottom:8px">
-        <button id="btnBack" class="ghost">⟵ Retour</button>
+        <button id="btnBack" class="ghost" data-i18n="back">⟵ Retour</button>
       </div>
       <section class="panel">
-        <h2>Collection</h2>
+        <h2 data-i18n="collectionTitle">Collection</h2>
         <div class="grid" id="collection"></div>
       </section>
     </section>
@@ -72,10 +76,10 @@
     <!-- Page Magasin -->
     <section id="page-shop" class="page">
       <div class="row" style="margin-bottom:8px">
-        <button id="btnBackShop" class="ghost">⟵ Retour</button>
+        <button id="btnBackShop" class="ghost" data-i18n="back">⟵ Retour</button>
       </div>
       <section class="panel">
-        <h2>Magasin</h2>
+        <h2 data-i18n="shopTitle">Magasin</h2>
         <div id="shopItems" class="grid"></div>
       </section>
     </section>
