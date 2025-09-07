@@ -181,6 +181,7 @@ function rollOnce(level, userState, {forceMinRarity=null}={}){
   userState.pulls += 1;
   userState.pity = (["Rare","Épique","Légendaire"].includes(baseRar.key)) ? 0 : (userState.pity + 1);
   return { atom, bonus, rarityBase: baseRar.key, rarityMult: multRar.key, baseAmount, multAmount, purchaseMult, level };
+
 }
 
 function doPull(level, times){
@@ -387,11 +388,13 @@ function renderShop(){
 function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; default: return ''; } }
 function totalTextClass(total){ if(total===125) return 't-rainbow'; if(total>=100) return 't-legendaire'; if(total>=50) return 't-epique'; if(total>=25) return 't-rare'; return 't-commun'; }
 function pushLogRich(res){
+
   const totalAtoms = res.baseAmount * res.multAmount * (res.purchaseMult || 1);
   const total = totalAtoms * res.atom.value;
   const cls = totalTextClass(total);
   const p = document.createElement('div');
   p.innerHTML = `<span class="${cls}">${res.atom.name} [${res.atom.id}]</span> — ${res.baseAmount}x${res.multAmount}x${res.purchaseMult || 1}x${res.atom.value} = ${total}${res.forced?" (pitié)":""}`;
+
   logEl.prepend(p);
 }
 
@@ -426,6 +429,7 @@ async function pullUI(level, times){
   [btnPull1, btnPull10].forEach(b=> b.disabled=true);
   if(times===1){
     const r = results[0];
+
     const totalAtoms = r.baseAmount * r.multAmount * (r.purchaseMult || 1);
     const total = totalAtoms * r.atom.value;
     const cls = totalTextClass(total);
@@ -437,6 +441,7 @@ async function pullUI(level, times){
       const total = totalAtoms * r.atom.value;
       const cls = totalTextClass(total);
       resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.baseAmount}x${r.multAmount}x${r.purchaseMult || 1}x${r.atom.value} = ${total}${r.forced?" (pitié)":""}`;
+
       pushLogRich(r);
       await new Promise(res=>setTimeout(res, 200));
     }
