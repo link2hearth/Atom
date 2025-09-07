@@ -78,6 +78,7 @@ PERIODS_RAW.forEach((period, idx)=>{
 });
 
 const PITY_THRESHOLD = 50; // garantit ≥ Rare au plus tard au 50e tirage
+const PULL10_COST = 50; // coût en atomes pour un tirage x10
 
 // ===== Sauvegarde locale
 
@@ -99,6 +100,24 @@ function pickAtom(level){ const pool = ATOMS.filter(a=>a.level===level); return 
 function ensureInv(state, atomId){ if(!state.inventory[atomId]) state.inventory[atomId] = { count: 0, totalMult: 0 }; return state.inventory[atomId]; }
 function computePoints(state){ return Object.values(state.inventory).reduce((a,b)=>a + (b?.count||0), 0); }
 
+function spendAtoms(st, amount){
+  if(computePoints(st) < amount) return false;
+  let remaining = amount;
+  for(let lvl=1; lvl<=7 && remaining>0; lvl++){
+    for(const atom of ATOMS.filter(a=>a.level===lvl)){
+      const inv = st.inventory[atom.id];
+      if(!inv || inv.count <= 0) continue;
+      const take = Math.min(inv.count, remaining);
+      inv.count -= take;
+      inv.totalMult -= take;
+      if(inv.count <= 0) delete st.inventory[atom.id];
+      remaining -= take;
+      if(remaining <= 0) break;
+    }
+  }
+  return remaining === 0;
+}
+
 const ATOM_MAP = Object.fromEntries(ATOMS.map(a=>[a.id, a]));
 const RARITY_ORDER = ["Commun","Peu commun","Rare","Épique","Légendaire"];
 
@@ -115,6 +134,10 @@ function rollOnce(level, userState, {forceMinRarity=null}={}){
 
 function doPull(level, times){
   const st = state;
+  if(level > st.levelsUnlocked) return null;
+  if(times === 10){
+    if(!spendAtoms(st, PULL10_COST)) return null;
+  }
   const results = [];
   for(let i=0;i<times;i++){
     const pityBefore = st.pity;
@@ -206,11 +229,13 @@ langSelect.addEventListener('change', ()=>{
 
 function renderTop(){
   const st = state;
-  pointsEl.textContent = computePoints(st);
+  const total = computePoints(st);
+  pointsEl.textContent = total;
   pityEl.textContent = st.pity;
   pullsEl.textContent = st.pulls;
-  ownedEl.textContent = computePoints(st);
+  ownedEl.textContent = total;
   lastSeenEl.textContent = new Date(st.lastSeen).toLocaleString();
+  refreshLevelSlider();
 }
 
 function renderCollection(){
@@ -236,16 +261,31 @@ function renderCollection(){
 }
 
 const shopItemsEl = document.getElementById('shopItems');
-const SHOP_ITEMS = [
-  {id:'pack-energy', name:'Recharge énergie x10', cost:10, currency:'gems'}
-];
 
 function renderShop(){
   shopItemsEl.innerHTML='';
-  for(const it of SHOP_ITEMS){
+  const st = state;
+  for(let lvl=2; lvl<=7; lvl++){
+    if(st.levelsUnlocked >= lvl) continue;
     const card=document.createElement('div'); card.className='card';
-    card.textContent = `${it.name} — ${it.cost} ${it.currency}`;
+    const btn=document.createElement('button');
+    btn.textContent = `Débloquer niveau ${lvl} — 10 atomes`;
+    btn.addEventListener('click', ()=>{
+      if(spendAtoms(st,10)){
+        st.levelsUnlocked = lvl;
+        persist();
+        renderTop();
+        renderShop();
+      } else {
+        pushLog("<i>Pas assez d'atomes.</i>");
+      }
+    });
+    card.append(btn);
     shopItemsEl.append(card);
+  }
+  if(!shopItemsEl.children.length){
+    const p=document.createElement('div'); p.className='muted'; p.textContent='Aucun objet disponible';
+    shopItemsEl.append(p);
   }
 }
 
@@ -306,6 +346,13 @@ const btnPull1 = document.getElementById('pull1');
 const btnPull10 = document.getElementById('pull10');
 const levelSlider = document.getElementById('levelSlider');
 const levelValue = document.getElementById('levelValue');
+function refreshLevelSlider(){
+  levelSlider.max = state.levelsUnlocked;
+  if(parseInt(levelSlider.value) > state.levelsUnlocked){
+    levelSlider.value = state.levelsUnlocked;
+    levelValue.textContent = state.levelsUnlocked;
+  }
+}
 levelSlider.addEventListener('input', ()=>{ levelValue.textContent = levelSlider.value; });
 btnPull1.addEventListener('click', ()=> pullUI(parseInt(levelSlider.value),1));
 btnPull10.addEventListener('click', ()=> pullUI(parseInt(levelSlider.value),10));
