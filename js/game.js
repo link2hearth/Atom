@@ -363,13 +363,18 @@ function renderShop(){
 
 function rarityTextClass(r){ switch(r){ case 'Commun': return 't-commun'; case 'Peu commun': return 't-peucommun'; case 'Rare': return 't-rare'; case 'Épique': return 't-epique'; case 'Légendaire': return 't-legendaire'; default: return ''; } }
 function totalTextClass(total){ if(total>=125) return 't-rainbow'; if(total>=100) return 't-legendaire'; if(total>=50) return 't-epique'; if(total>=25) return 't-rare'; return 't-commun'; }
+
+// Format the calculation display without spaces or parentheses, e.g. "2+1x1x2"
+function formatCalc(res){
+  return `${res.atom.value}+${res.addAmount}x${res.multAmount}x${res.purchaseMult || 1}`;
+}
 function pushLogRich(res){
 
   const product = res.addAmount * res.multAmount * (res.purchaseMult || 1);
   const total = res.atom.value + product;
   const cls = totalTextClass(total);
   const p = document.createElement('div');
-  p.innerHTML = `<span class="${cls}">${res.atom.name} [${res.atom.id}]</span> — ${res.atom.value}+${res.addAmount}x${res.multAmount}x${res.purchaseMult || 1} = ${total}${res.forced?" (pitié)":""}`;
+  p.innerHTML = `<span class="${cls}">${res.atom.name} [${res.atom.id}]</span> — ${formatCalc(res)} = ${total}${res.forced?" (pitié)":""}`;
 
   logEl.prepend(p);
 }
@@ -409,14 +414,14 @@ async function pullUI(level, times){
     const product = r.addAmount * r.multAmount * (r.purchaseMult || 1);
     const total = r.atom.value + product;
     const cls = totalTextClass(total);
-    resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.atom.value}+${r.addAmount}x${r.multAmount}x${r.purchaseMult || 1} = ${total}${r.forced?" (pitié)":""}`;
+    resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${formatCalc(r)} = ${total}${r.forced?" (pitié)":""}`;
     pushLogRich(r);
   } else {
     for(const r of results){
       const product = r.addAmount * r.multAmount * (r.purchaseMult || 1);
       const total = r.atom.value + product;
       const cls = totalTextClass(total);
-      resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${r.atom.value}+${r.addAmount}x${r.multAmount}x${r.purchaseMult || 1} = ${total}${r.forced?" (pitié)":""}`;
+      resultTextEl.innerHTML = `<span class="${cls}">${r.atom.name} [${r.atom.id}]</span> — ${formatCalc(r)} = ${total}${r.forced?" (pitié)":""}`;
 
       pushLogRich(r);
       await new Promise(res=>setTimeout(res, 200));
